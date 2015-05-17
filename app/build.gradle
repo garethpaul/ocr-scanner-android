@@ -6,8 +6,8 @@ android {
 
     defaultConfig {
         applicationId "com.garethpaul.scanr"
-        minSdkVersion 16
-        targetSdkVersion 17
+        minSdkVersion 18
+        targetSdkVersion 18
     }
 
     buildTypes {
