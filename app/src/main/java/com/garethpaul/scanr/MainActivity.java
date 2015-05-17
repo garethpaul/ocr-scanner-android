@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -24,15 +25,14 @@ import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 public class MainActivity extends Activity implements OnClickListener {
 	private TessOCR mTessOCR;
-	private TextView mResult;
 	private ProgressDialog mProgressDialog;
-	private ImageView mImage;
-	private Button mButtonCamera;
+	private ImageButton imageButton;
 	private String mCurrentPhotoPath;
 	private static final int REQUEST_TAKE_PHOTO = 1;
 	private static final int REQUEST_PICK_PHOTO = 2;
@@ -43,6 +43,10 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+        System.out.println("MainActivty");
+        ActionBar ab = getActionBar();
+        ab.setDisplayShowTitleEnabled(false);
+
         String[] paths = new String[] { DATA_PATH, DATA_PATH + "tessdata/" };
 
         for (String path : paths) {
@@ -58,7 +62,6 @@ public class MainActivity extends Activity implements OnClickListener {
 
         }
 
-        // lang.traineddata file with the app (in assets folder)
         // You can get them at:
         // http://code.google.com/p/tesseract-ocr/downloads/list
         // This area needs work and optimization
@@ -90,39 +93,13 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-
-
-		mResult = (TextView) findViewById(R.id.tv_result);
-		mImage = (ImageView) findViewById(R.id.image);
-		mButtonCamera = (Button) findViewById(R.id.bt_camera);
-		mButtonCamera.setOnClickListener(this);
+		imageButton = (ImageButton) findViewById(R.id.imageButton);
+		imageButton.setOnClickListener(this);
 		mTessOCR = new TessOCR();
 	}
 
-	private void uriOCR(Uri uri) {
-		if (uri != null) {
-			InputStream is = null;
-			try {
-				is = getContentResolver().openInputStream(uri);
-				Bitmap bitmap = BitmapFactory.decodeStream(is);
-				mImage.setImageBitmap(bitmap);
-				doOCR(bitmap);
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} finally {
-				if (is != null) {
-					try {
-						is.close();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-	}
-	
+
+
 	@Override
 	protected void onResume() {
 		// TODO Auto-generated method stub
@@ -130,9 +107,9 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		Intent intent = getIntent();
 		if (Intent.ACTION_SEND.equals(intent.getAction())) {
-			Uri uri = (Uri) intent
-					.getParcelableExtra(Intent.EXTRA_STREAM);
-			uriOCR(uri);
+            System.out.println("sending to result activity");
+            Intent takePictureIntent = new Intent(this, ResultActivity.class);
+            startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
 		}
 	}
 
@@ -167,7 +144,6 @@ public class MainActivity extends Activity implements OnClickListener {
 				photoFile = createImageFile();
 			} catch (IOException ex) {
 				// Error occurred while creating the File
-
 			}
 			// Continue only if the File was successfully created
 			if (photoFile != null) {
@@ -183,11 +159,9 @@ public class MainActivity extends Activity implements OnClickListener {
 	 */
 	private File createImageFile() throws IOException {
 		// Create an image file name
-		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
-				.format(new Date());
-		String imageFileName = "JPEG_" + timeStamp + "_";
+		String imageFileName = "JPEG_";
 		String storageDir = Environment.getExternalStorageDirectory()
-				+ "/TessOCR";
+                + "/TessOCR";
 		File dir = new File(storageDir);
 		if (!dir.exists())
 			dir.mkdir();
@@ -204,87 +178,25 @@ public class MainActivity extends Activity implements OnClickListener {
 		// TODO Auto-generated method stub
 		if (requestCode == REQUEST_TAKE_PHOTO
 				&& resultCode == Activity.RESULT_OK) {
-			setPic();
+            Intent i = new Intent(getApplicationContext(), ResultActivity.class);
+            i.putExtra("IMAGE_URI",mCurrentPhotoPath);
+            startActivity(i);
+            //setPic();
 		}
-		else if (requestCode == REQUEST_PICK_PHOTO
-				&& resultCode == Activity.RESULT_OK) {
-			Uri uri = data.getData();
-			if (uri != null) {
-				uriOCR(uri);
-			}
-		}
-	}
+    }
 
-	private void setPic() {
-		// Get the dimensions of the View
-		int targetW = mImage.getWidth();
-		int targetH = mImage.getHeight();
 
-		// Get the dimensions of the bitmap
-		BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-		bmOptions.inJustDecodeBounds = true;
-		BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
-		int photoW = bmOptions.outWidth;
-		int photoH = bmOptions.outHeight;
-
-		// Determine how much to scale down the image
-		int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
-
-		// Decode the image file into a Bitmap sized to fill the View
-		bmOptions.inJustDecodeBounds = false;
-		bmOptions.inSampleSize = scaleFactor << 1;
-		bmOptions.inPurgeable = true;
-
-		Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
-		mImage.setImageBitmap(bitmap);
-		doOCR(bitmap);
-
-	}
 
 	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub
-		int id = v.getId();
-		switch (id) {
-		case R.id.bt_camera:
-			takePhoto();
-			break;
-		}
+		takePhoto();
+
 	}
 
 	private void takePhoto() {
 		dispatchTakePictureIntent();
 	}
 
-	private void doOCR(final Bitmap bitmap) {
-		if (mProgressDialog == null) {
-			mProgressDialog = ProgressDialog.show(this, "Processing",
-					"Doing OCR...", true);
-		}
-		else {
-			mProgressDialog.show();
-		}
-		
-		new Thread(new Runnable() {
-			public void run() {
 
-				final String result = mTessOCR.getOCRResult(bitmap);
-
-				runOnUiThread(new Runnable() {
-
-					@Override
-					public void run() {
-						// TODO Auto-generated method stub
-						if (result != null && !result.equals("")) {
-							mResult.setText(result);
-						}
-
-						mProgressDialog.dismiss();
-					}
-
-				});
-
-			};
-		}).start();
-	}
 }

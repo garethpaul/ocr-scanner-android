@@ -34,6 +34,14 @@
                 <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ResultActivity"
+            android:label="@string/app_name"
+            android:parentActivityName="com.garethpaul.scanr.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.garethpaul.scanr.MainActivity" />
+         </activity>
     </application>
 
 </manifest>
