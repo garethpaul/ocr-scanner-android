@@ -39,7 +39,7 @@ OCR apps can process sensitive images and text. Future changes should keep all
 sample processing local unless network behavior is explicit, documented, and
 controlled by the user.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Silent image or text upload behavior
 - Bundled trained data without license notes
