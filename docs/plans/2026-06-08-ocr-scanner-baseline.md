@@ -24,6 +24,7 @@ stores Tesseract data on external storage, and displays recognized text.
   read/write external storage permissions documented.
 - Disabled Tesseract debug logging and stopped printing the data path.
 - Guarded bitmap sample-size calculation and skipped OCR when decode fails.
+- Added ActionBar and OCR cleanup guards to avoid avoidable lifecycle crashes.
 - Removed generated NDK `obj/` intermediates from source control and ignored
   future local build outputs.
 - Added `make check` and `scripts/check-baseline.py` static verification.

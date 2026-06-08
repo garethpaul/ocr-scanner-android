@@ -19,6 +19,9 @@ public class TessOCR {
 	}
 	
 	public String getOCRResult(Bitmap bitmap) {
+        if (bitmap == null) {
+            return "";
+        }
 		mTess.setImage(bitmap);
 		String result = mTess.getUTF8Text();
 		return result;

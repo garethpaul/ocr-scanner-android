@@ -2,7 +2,6 @@
 """Static baseline checks for the legacy Android OCR scanner."""
 
 from pathlib import Path
-import re
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -61,9 +60,33 @@ def main():
         failures.append("TessOCR must keep native OCR debug logging disabled")
     if "System.out.println(DATA_PATH" in tess:
         failures.append("TessOCR must not print external storage paths")
+    if "if (bitmap == null)" not in tess:
+        failures.append("TessOCR must tolerate failed bitmap decodes")
+
+    main = read("app/src/main/java/com/garethpaul/scanr/MainActivity.java")
+    main_super = main.find("super.onCreate(savedInstanceState)")
+    main_actionbar = main.find("getActionBar()")
+    if main_super == -1 or main_actionbar == -1 or main_super > main_actionbar:
+        failures.append("MainActivity must call super.onCreate before ActionBar access")
+    if "if (ab != null)" not in main:
+        failures.append("MainActivity must guard ActionBar access")
+    if "if (mTessOCR != null)" not in main:
+        failures.append("MainActivity must guard OCR cleanup")
 
     result = read("app/src/main/java/com/garethpaul/scanr/ResultActivity.java")
-    for phrase in ["Math.max(1, Math.min", "Math.max(1, scaleFactor << 1)", "if (bitmap != null)"]:
+    result_super = result.find("super.onCreate(savedInstanceState)")
+    result_actionbar = result.find("getActionBar()")
+    if result_super == -1 or result_actionbar == -1 or result_super > result_actionbar:
+        failures.append("ResultActivity must call super.onCreate before ActionBar access")
+    for phrase in [
+        "if (ab != null)",
+        "Math.max(1, Math.min",
+        "Math.max(1, scaleFactor << 1)",
+        "if (bitmap == null)",
+        "Unable to decode image.",
+        "if (mProgressDialog != null)",
+        "if (mTessOCR != null)",
+    ]:
         if phrase not in result:
             failures.append(f"ResultActivity bitmap decode must include {phrase}")
 

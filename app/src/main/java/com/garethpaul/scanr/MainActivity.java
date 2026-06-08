@@ -43,11 +43,14 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
         System.out.println("MainActivty");
         ActionBar ab = getActionBar();
-        ab.setDisplayShowTitleEnabled(false);
-        getActionBar().setDisplayHomeAsUpEnabled(false);
-        getActionBar().setHomeAsUpIndicator(R.drawable.none);
+        if (ab != null) {
+            ab.setDisplayShowTitleEnabled(false);
+            ab.setDisplayHomeAsUpEnabled(false);
+            ab.setHomeAsUpIndicator(R.drawable.none);
+        }
 
         String[] paths = new String[] { DATA_PATH, DATA_PATH + "tessdata/" };
 
@@ -93,7 +96,6 @@ public class MainActivity extends Activity implements OnClickListener {
             }
         }
 
-		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		imageButton = (ImageButton) findViewById(R.id.imageButton);
 		imageButton.setOnClickListener(this);
@@ -126,7 +128,9 @@ public class MainActivity extends Activity implements OnClickListener {
 		// TODO Auto-generated method stub
 		super.onDestroy();
 
-		mTessOCR.onDestroy();
+		if (mTessOCR != null) {
+			mTessOCR.onDestroy();
+		}
 	}
 
 	private void dispatchTakePictureIntent() {

@@ -30,10 +30,12 @@ public class ResultActivity extends Activity implements View.OnClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ActionBar ab = getActionBar();
-        ab.setDisplayShowTitleEnabled(false);
-        getActionBar().setDisplayHomeAsUpEnabled(true);
         super.onCreate(savedInstanceState);
+        ActionBar ab = getActionBar();
+        if (ab != null) {
+            ab.setDisplayShowTitleEnabled(false);
+            ab.setDisplayHomeAsUpEnabled(true);
+        }
         setContentView(R.layout.activity_result);
         mTessOCR = new TessOCR();
         mResult = (TextView) findViewById(R.id.tv_result);
@@ -72,6 +74,11 @@ public class ResultActivity extends Activity implements View.OnClickListener {
     }
 
     private void doOCR(final Bitmap bitmap) {
+        if (bitmap == null) {
+            mResult.setText("Unable to decode image.");
+            return;
+        }
+
         if (mProgressDialog == null) {
             mProgressDialog = ProgressDialog.show(this, "Processing",
                     "Doing OCR...", true);
@@ -94,7 +101,9 @@ public class ResultActivity extends Activity implements View.OnClickListener {
                             mResult.setText(result);
                         }
 
-                        mProgressDialog.dismiss();
+                        if (mProgressDialog != null) {
+                            mProgressDialog.dismiss();
+                        }
                     }
 
                 });
@@ -132,10 +141,12 @@ public class ResultActivity extends Activity implements View.OnClickListener {
         bmOptions.inPurgeable = true;
 
         Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
-        if (bitmap != null) {
-            mImage.setImageBitmap(bitmap);
-            doOCR(bitmap);
+        if (bitmap == null) {
+            mResult.setText("Unable to decode image.");
+            return;
         }
+        mImage.setImageBitmap(bitmap);
+        doOCR(bitmap);
 
     }
 
@@ -165,10 +176,13 @@ public class ResultActivity extends Activity implements View.OnClickListener {
 
 
     @Override
-    protected void onDestroy() {
-        // TODO Auto-generated method stub
-        super.onDestroy();
-    }
+	protected void onDestroy() {
+		// TODO Auto-generated method stub
+		super.onDestroy();
+        if (mTessOCR != null) {
+            mTessOCR.onDestroy();
+        }
+	}
 
     @Override
     public void onClick(View v) {
