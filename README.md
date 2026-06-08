@@ -11,11 +11,14 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 
 ## Repository Contents
 
+- `CHANGES.md` - baseline change log
+- `Makefile` - local static verification entry point
 - `build.gradle` - Android or Gradle build configuration
 - `app` - source or example code
 - `gradle` - source or example code
 - `gradlew` - Android or Gradle build configuration
 - `jni` - source or example code
+- `scripts/check-baseline.py` - static baseline checks
 - `SECURITY.md` - security reporting and disclosure guidance
 - `VISION.md` - project direction and maintenance guardrails
 
@@ -49,6 +52,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
+- `make check`
+- `python3 scripts/check-baseline.py`
 - `./gradlew test` or Android Studio's test runner when the SDK is configured
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -59,6 +64,13 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 ## Security and Privacy Notes
 
+- The app processes camera images and OCR text. Android `allowBackup` is
+  disabled and Tesseract debug logging should remain off.
+- The legacy code still uses external storage for image and Tesseract data; do
+  not commit captured images, OCR output, or generated device data.
+- Generated NDK outputs under `obj/` are intentionally ignored and should not
+  be committed; keep only source, packaged OCR assets, and documented native
+  library drops in git.
 - Review changes touching authentication or token handling; examples from the scan include jni/com_googlecode_tesseract_android/glibc/glob.c.
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include app/src/main/AndroidManifest.xml, app/src/main/java/com/garethpaul/scanr/MainActivity.java, app/src/main/res/layout/activity_main.xml, app/src/main/res/layout/activity_result.xml, and 6 more.
 - Review changes touching mobile permissions or privacy-sensitive device data; examples from the scan include app/src/main/AndroidManifest.xml, app/src/main/java/com/garethpaul/scanr/MainActivity.java, gradlew, jni/com_googlecode_leptonica_android/box.cpp, and 6 more.
@@ -67,6 +79,10 @@ When the required SDK or runtime is unavailable, use static checks and source re
 ## Maintenance Notes
 
 - This looks like a legacy Android project or sample. Expect Android SDK, Gradle, and support-library versions to matter.
+- Run `make check` before changing manifest permissions, OCR setup, image
+  decode paths, or Gradle metadata.
+- Keep generated NDK intermediates, APKs, local SDK config, and signing
+  material out of the repository.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 

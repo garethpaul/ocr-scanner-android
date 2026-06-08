@@ -13,8 +13,7 @@ public class TessOCR {
     public TessOCR() {
 		// TODO Auto-generated constructor stub
 		mTess = new TessBaseAPI();
-        mTess.setDebug(true);
-        System.out.println(DATA_PATH.toString());
+        mTess.setDebug(false);
         mTess.init(DATA_PATH, "eng");
 
 	}

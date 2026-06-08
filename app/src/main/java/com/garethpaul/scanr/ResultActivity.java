@@ -124,16 +124,18 @@ public class ResultActivity extends Activity implements View.OnClickListener {
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
         // Determine how much to scale down the image
-        int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
+        int scaleFactor = Math.max(1, Math.min(photoW / targetW, photoH / targetH));
 
         // Decode the image file into a Bitmap sized to fill the View
         bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = scaleFactor << 1;
+        bmOptions.inSampleSize = Math.max(1, scaleFactor << 1);
         bmOptions.inPurgeable = true;
 
         Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
-        mImage.setImageBitmap(bitmap);
-        doOCR(bitmap);
+        if (bitmap != null) {
+            mImage.setImageBitmap(bitmap);
+            doOCR(bitmap);
+        }
 
     }
 

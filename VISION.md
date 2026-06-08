@@ -13,6 +13,9 @@ dependencies. Its value is in showing the integration boundaries clearly.
 The goal is to make the sample reproducible and safe to study while separating
 legacy build constraints from any future modernization work.
 
+Current baseline: `make check` verifies manifest privacy guardrails, Tesseract
+debug logging, bitmap decode safety, HTTPS wrapper metadata, and docs.
+
 The current focus is:
 
 Priority:
@@ -21,6 +24,8 @@ Priority:
 - Keep native OCR dependencies explicit
 - Document Android SDK, NDK, and Gradle version assumptions
 - Avoid changing recognition behavior without test material
+- Keep Android backup disabled and native OCR debug logging off
+- Keep generated NDK object files out of source control
 
 Next priorities:
 

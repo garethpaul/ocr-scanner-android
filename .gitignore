@@ -11,9 +11,16 @@
 # generated files
 bin/
 gen/
+obj/
+.externalNativeBuild/
+captures/
 
 # Local configuration file (sdk path, etc)
 local.properties
+
+# Local signing material
+*.jks
+*.keystore
 
 # Windows thumbnail db
 Thumbs.db
