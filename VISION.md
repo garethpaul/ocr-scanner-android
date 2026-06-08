@@ -35,6 +35,11 @@ Contribution rules:
 
 ## Security And Responsible Use
 
+Canonical security policy and reporting:
+
+- [`SECURITY.md`](SECURITY.md)
+
+
 OCR apps can process sensitive images and text. Future changes should keep all
 sample processing local unless network behavior is explicit, documented, and
 controlled by the user.
