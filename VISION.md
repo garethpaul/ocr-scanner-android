@@ -1,5 +1,8 @@
 ## OCR Scanner Android Vision
 
+This document explains the current state and direction of the project.
+Project overview and developer docs: [`README.md`](README.md)
+
 OCR Scanner Android is a legacy Android sample for on-device optical character
 recognition using native Tesseract and Leptonica bindings.
 
