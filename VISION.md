@@ -45,3 +45,6 @@ controlled by the user.
 - Bundled trained data without license notes
 - Native binary drops without source or provenance
 - Broad Android rewrites that obscure the JNI learning path
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
