@@ -42,6 +42,10 @@ Additional scan context:
 ```bash
 git clone https://github.com/garethpaul/ocr-scanner-android.git
 cd ocr-scanner-android
+make lint
+make test
+make build
+make check
 ```
 
 The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
@@ -65,6 +69,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
+- `make lint`
+- `make test`
+- `make build`
 - `make check`
 - `python3 scripts/check-baseline.py`
 - `./gradlew test` or Android Studio's test runner when the SDK is configured
@@ -102,8 +109,10 @@ When the required SDK or runtime is unavailable, use static checks and source re
 ## Maintenance Notes
 
 - This looks like a legacy Android project or sample. Expect Android SDK, Gradle, and support-library versions to matter.
-- Run `make check` before changing manifest permissions, OCR setup, image
-  decode paths, or Gradle metadata.
+- Run `make lint`, `make test`, `make build`, and `make check` before changing
+  manifest permissions, OCR setup, image decode paths, or Gradle metadata.
+- See `docs/plans/2026-06-09-make-gate-aliases.md` for the local verification
+  gate aliases.
 - Keep generated NDK intermediates, APKs, local SDK config, and signing
   material out of the repository.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.

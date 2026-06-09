@@ -28,6 +28,7 @@ REQUIRED = [
     "docs/plans/2026-06-09-shared-image-intent.md",
     "docs/plans/2026-06-09-image-only-share-filter.md",
     "docs/plans/2026-06-09-shared-image-stream-guards.md",
+    "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.properties",
 ]
@@ -149,8 +150,19 @@ def main():
     if tracked_obj:
         failures.append("generated NDK obj files must not be tracked: " + ", ".join(tracked_obj[:5]))
 
+    makefile = read("Makefile")
+    for phrase in [
+        ".PHONY: build check lint static-check test verify",
+        "check: verify",
+        "verify: static-check",
+        "lint test build: static-check",
+        "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/check-baseline.py",
+    ]:
+        if phrase not in makefile:
+            failures.append(f"Makefile must include standard gate alias: {phrase}")
+
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
-    for phrase in ["make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream"]:
+    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
@@ -175,6 +187,10 @@ def main():
     shared_stream_plan = read("docs/plans/2026-06-09-shared-image-stream-guards.md")
     if "status: completed" not in shared_stream_plan or "shared image stream" not in shared_stream_plan:
         failures.append("shared image stream guard plan must record completed status and verification")
+    make_gate_plan_path = ROOT / "docs/plans/2026-06-09-make-gate-aliases.md"
+    make_gate_plan = make_gate_plan_path.read_text(encoding="utf-8") if make_gate_plan_path.exists() else ""
+    if "status: completed" not in make_gate_plan or "make lint" not in make_gate_plan or "make build" not in make_gate_plan:
+        failures.append("make gate alias plan must record completed status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

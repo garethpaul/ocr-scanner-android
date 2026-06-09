@@ -30,8 +30,9 @@ Helpful reports include:
 - Review found mobile permission or privacy-sensitive data handling; changes in those areas should receive security-focused review before merge.
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - Dependency manifests detected: build.gradle. Dependency updates should preserve lockfiles when present and avoid introducing packages without a clear maintenance reason.
-- Run `make check` after changing manifest permissions, OCR setup, image decode
-  behavior, Gradle metadata, or security documentation.
+- Run `make lint`, `make test`, `make build`, and `make check` after changing
+  manifest permissions, OCR setup, image decode behavior, Gradle metadata, or
+  security documentation.
 - Camera images, external storage OCR data, and recognized text should be
   treated as private user data. Android backup must remain disabled and native
   OCR debug logging should stay off.

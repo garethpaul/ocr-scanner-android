@@ -13,8 +13,9 @@ dependencies. Its value is in showing the integration boundaries clearly.
 The goal is to make the sample reproducible and safe to study while separating
 legacy build constraints from any future modernization work.
 
-Current baseline: `make check` verifies manifest privacy guardrails, Tesseract
-debug logging, bitmap decode safety, HTTPS wrapper metadata, and docs.
+Current baseline: `make lint`, `make test`, `make build`, and `make check`
+verify manifest privacy guardrails, Tesseract debug logging, bitmap decode
+safety, HTTPS wrapper metadata, and docs.
 
 The current focus is:
 
@@ -32,6 +33,8 @@ Priority:
 - Keep shared image intents routed through explicit stream URI handling
 - Keep share intent filters image-only for OCR entry points
 - Keep shared image stream guards before OCR processing
+- Keep `make lint`, `make test`, `make build`, and `make check` on the
+  SDK-free static baseline
 
 Next priorities:
 
@@ -50,6 +53,8 @@ Contribution rules:
 - Preserve shared image intent stream handling when changing OCR entry points.
 - Preserve image-only share filters when changing manifest intent filters.
 - Preserve shared image stream guards when changing shared-image OCR handling.
+- Run `make lint`, `make test`, `make build`, and `make check` before pushing
+  manifest, OCR, or Gradle metadata changes.
 
 ## Security And Responsible Use
 

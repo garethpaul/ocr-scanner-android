@@ -15,5 +15,7 @@
 - Routed shared image intents through explicit `EXTRA_STREAM` URI handling.
 - Narrowed the share intent filter to image-only content.
 - Added shared image stream guards before OCR processing.
+- Added `make lint`, `make test`, and `make build` aliases so the standard
+  gate commands run the same SDK-free static baseline as `make check`.
 - Added `make check` static verification for the legacy Android baseline.
 - Removed tracked generated NDK `obj/` intermediates and ignored future outputs.
