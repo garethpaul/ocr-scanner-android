@@ -24,6 +24,7 @@ REQUIRED = [
     "docs/plans/2026-06-08-ocr-scanner-baseline.md",
     "docs/plans/2026-06-09-timestamped-camera-captures.md",
     "docs/plans/2026-06-09-remove-activity-stdout.md",
+    "docs/plans/2026-06-09-uri-error-logging.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.properties",
 ]
@@ -88,6 +89,8 @@ def main():
     result = read("app/src/main/java/com/garethpaul/scanr/ResultActivity.java")
     if "System.out.println" in result:
         failures.append("ResultActivity must not print OCR lifecycle details to stdout")
+    if "printStackTrace()" in result:
+        failures.append("ResultActivity must not dump image handling stack traces")
     result_super = result.find("super.onCreate(savedInstanceState)")
     result_actionbar = result.find("getActionBar()")
     if result_super == -1 or result_actionbar == -1 or result_super > result_actionbar:
@@ -100,6 +103,8 @@ def main():
         "Unable to decode image.",
         "if (mProgressDialog != null)",
         "if (mTessOCR != null)",
+        'Log.e(TAG, "Unable to open image URI", e)',
+        'Log.e(TAG, "Unable to close image URI stream", e)',
     ]:
         if phrase not in result:
             failures.append(f"ResultActivity bitmap decode must include {phrase}")
@@ -124,7 +129,7 @@ def main():
         failures.append("generated NDK obj files must not be tracked: " + ", ".join(tracked_obj[:5]))
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
-    for phrase in ["make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout"]:
+    for phrase in ["make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
@@ -137,6 +142,9 @@ def main():
     stdout_plan = read("docs/plans/2026-06-09-remove-activity-stdout.md")
     if "status: completed" not in stdout_plan or "stdout" not in stdout_plan:
         failures.append("stdout plan must record completed status and verification")
+    uri_plan = read("docs/plans/2026-06-09-uri-error-logging.md")
+    if "status: completed" not in uri_plan or "printStackTrace" not in uri_plan:
+        failures.append("URI error logging plan must record completed status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

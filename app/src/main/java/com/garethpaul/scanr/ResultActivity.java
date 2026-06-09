@@ -26,6 +26,7 @@ public class ResultActivity extends Activity implements View.OnClickListener {
     private TextView mResult;
     private static final int REQUEST_TAKE_PHOTO = 1;
     private static final int REQUEST_PICK_PHOTO = 2;
+    private static final String TAG = "OCR";
     private String mCurrentPhotoPath;
 
     @Override
@@ -58,15 +59,13 @@ public class ResultActivity extends Activity implements View.OnClickListener {
                 mImage.setImageBitmap(bitmap);
                 doOCR(bitmap);
             } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                Log.e(TAG, "Unable to open image URI", e);
             } finally {
                 if (is != null) {
                     try {
                         is.close();
                     } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
+                        Log.e(TAG, "Unable to close image URI stream", e);
                     }
                 }
             }

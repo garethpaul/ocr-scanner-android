@@ -54,6 +54,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   previous image.
 - Activity lifecycle and photo result paths should not print OCR details to
   stdout.
+- Image URI decode failures use tagged Android logging instead of dumping stack
+  traces.
 
 ## Testing and Verification
 
@@ -76,6 +78,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Timestamped capture files are still private user data and should remain local
   to the device or test fixture environment.
 - Keep stdout clear of OCR lifecycle and photo result details.
+- Avoid stack trace dumps around private image URI handling.
 - Generated NDK outputs under `obj/` are intentionally ignored and should not
   be committed; keep only source, packaged OCR assets, and documented native
   library drops in git.

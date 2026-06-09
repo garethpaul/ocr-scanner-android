@@ -11,5 +11,6 @@
 - Wrote camera captures to timestamped external-storage image files and checked
   image directory creation before launching the camera intent.
 - Removed activity stdout prints from OCR lifecycle and photo result paths.
+- Replaced image URI `printStackTrace()` calls with tagged Android logging.
 - Added `make check` static verification for the legacy Android baseline.
 - Removed tracked generated NDK `obj/` intermediates and ignored future outputs.

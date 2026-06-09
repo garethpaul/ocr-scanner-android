@@ -39,6 +39,8 @@ Helpful reports include:
   external-storage data.
 - Activity lifecycle and photo result paths should not print OCR details to
   stdout.
+- Image URI decode failures should use tagged Android logging instead of stack
+  trace dumps.
 - Generated NDK objects, APKs, local SDK paths, and signing material are local
   build outputs and must not be committed.
 
