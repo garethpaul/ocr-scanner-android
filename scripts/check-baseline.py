@@ -26,6 +26,7 @@ REQUIRED = [
     "docs/plans/2026-06-09-remove-activity-stdout.md",
     "docs/plans/2026-06-09-uri-error-logging.md",
     "docs/plans/2026-06-09-shared-image-intent.md",
+    "docs/plans/2026-06-09-image-only-share-filter.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.properties",
 ]
@@ -56,6 +57,11 @@ def main():
         for permission in ["android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_EXTERNAL_STORAGE"]:
             if permission not in permissions:
                 failures.append(f"manifest must explicitly document legacy {permission} usage")
+        manifest_text = read("app/src/main/AndroidManifest.xml")
+        if 'android:mimeType="text/plain"' in manifest_text:
+            failures.append("share intent filter must not advertise text/plain input")
+        if 'android:mimeType="image/*"' not in manifest_text:
+            failures.append("share intent filter must keep image/* input")
     except ET.ParseError as error:
         failures.append(f"AndroidManifest.xml must parse as XML: {error}")
 
@@ -141,7 +147,7 @@ def main():
         failures.append("generated NDK obj files must not be tracked: " + ", ".join(tracked_obj[:5]))
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
-    for phrase in ["make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image"]:
+    for phrase in ["make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
@@ -160,6 +166,9 @@ def main():
     shared_image_plan = read("docs/plans/2026-06-09-shared-image-intent.md")
     if "status: completed" not in shared_image_plan or "shared image" not in shared_image_plan:
         failures.append("shared image intent plan must record completed status and verification")
+    image_only_plan = read("docs/plans/2026-06-09-image-only-share-filter.md")
+    if "status: completed" not in image_only_plan or "image-only" not in image_only_plan:
+        failures.append("image-only share filter plan must record completed status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

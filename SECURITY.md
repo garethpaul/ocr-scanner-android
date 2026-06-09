@@ -43,6 +43,8 @@ Helpful reports include:
   trace dumps.
 - Shared image intents should require an image MIME type and `EXTRA_STREAM` URI
   before OCR processing.
+- The share intent filter should stay image-only so unsupported text/plain
+  content is not routed into OCR image handling.
 - Generated NDK objects, APKs, local SDK paths, and signing material are local
   build outputs and must not be committed.
 

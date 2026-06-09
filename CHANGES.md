@@ -13,5 +13,6 @@
 - Removed activity stdout prints from OCR lifecycle and photo result paths.
 - Replaced image URI `printStackTrace()` calls with tagged Android logging.
 - Routed shared image intents through explicit `EXTRA_STREAM` URI handling.
+- Narrowed the share intent filter to image-only content.
 - Added `make check` static verification for the legacy Android baseline.
 - Removed tracked generated NDK `obj/` intermediates and ignored future outputs.

@@ -30,6 +30,7 @@ Priority:
 - Keep activity lifecycle and photo result paths free of stdout prints
 - Keep image URI decode failures observable without stack trace dumps
 - Keep shared image intents routed through explicit stream URI handling
+- Keep share intent filters image-only for OCR entry points
 
 Next priorities:
 
@@ -46,6 +47,7 @@ Contribution rules:
 - Keep native dependency licenses visible.
 - Do not mix modernization with behavior changes.
 - Preserve shared image intent stream handling when changing OCR entry points.
+- Preserve image-only share filters when changing manifest intent filters.
 
 ## Security And Responsible Use
 

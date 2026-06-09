@@ -58,6 +58,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   traces.
 - Shared image intents forward their `EXTRA_STREAM` URI into the result screen
   instead of launching an empty OCR flow.
+- The manifest advertises an image-only share target so text shares are not
+  routed into an OCR-only flow.
 
 ## Testing and Verification
 
@@ -83,6 +85,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Avoid stack trace dumps around private image URI handling.
 - Shared image intent handling should require an image MIME type and a stream
   URI before OCR processing starts.
+- Keep the share intent filter image-only so Android does not offer the OCR
+  activity for text/plain content it cannot process.
 - Generated NDK outputs under `obj/` are intentionally ignored and should not
   be committed; keep only source, packaged OCR assets, and documented native
   library drops in git.
