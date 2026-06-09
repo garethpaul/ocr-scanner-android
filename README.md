@@ -60,6 +60,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   instead of launching an empty OCR flow.
 - The manifest advertises an image-only share target so text shares are not
   routed into an OCR-only flow.
+- Shared image stream guards stop OCR before processing when the incoming image
+  stream cannot be opened or decoded.
 
 ## Testing and Verification
 
@@ -87,6 +89,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   URI before OCR processing starts.
 - Keep the share intent filter image-only so Android does not offer the OCR
   activity for text/plain content it cannot process.
+- Shared image stream guards should keep null input streams and failed decodes
+  from reaching OCR.
 - Generated NDK outputs under `obj/` are intentionally ignored and should not
   be committed; keep only source, packaged OCR assets, and documented native
   library drops in git.

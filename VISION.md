@@ -31,6 +31,7 @@ Priority:
 - Keep image URI decode failures observable without stack trace dumps
 - Keep shared image intents routed through explicit stream URI handling
 - Keep share intent filters image-only for OCR entry points
+- Keep shared image stream guards before OCR processing
 
 Next priorities:
 
@@ -48,6 +49,7 @@ Contribution rules:
 - Do not mix modernization with behavior changes.
 - Preserve shared image intent stream handling when changing OCR entry points.
 - Preserve image-only share filters when changing manifest intent filters.
+- Preserve shared image stream guards when changing shared-image OCR handling.
 
 ## Security And Responsible Use
 

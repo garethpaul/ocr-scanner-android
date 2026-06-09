@@ -27,6 +27,7 @@ REQUIRED = [
     "docs/plans/2026-06-09-uri-error-logging.md",
     "docs/plans/2026-06-09-shared-image-intent.md",
     "docs/plans/2026-06-09-image-only-share-filter.md",
+    "docs/plans/2026-06-09-shared-image-stream-guards.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.properties",
 ]
@@ -121,6 +122,8 @@ def main():
         "if (mTessOCR != null)",
         'Log.e(TAG, "Unable to open image URI", e)',
         'Log.e(TAG, "Unable to close image URI stream", e)',
+        "if (is == null)",
+        'mResult.setText("Unable to open image.")',
         "extras.getParcelable(Intent.EXTRA_STREAM)",
         "uriOCR(imageUri)",
     ]:
@@ -147,7 +150,7 @@ def main():
         failures.append("generated NDK obj files must not be tracked: " + ", ".join(tracked_obj[:5]))
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
-    for phrase in ["make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only"]:
+    for phrase in ["make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
@@ -169,6 +172,9 @@ def main():
     image_only_plan = read("docs/plans/2026-06-09-image-only-share-filter.md")
     if "status: completed" not in image_only_plan or "image-only" not in image_only_plan:
         failures.append("image-only share filter plan must record completed status and verification")
+    shared_stream_plan = read("docs/plans/2026-06-09-shared-image-stream-guards.md")
+    if "status: completed" not in shared_stream_plan or "shared image stream" not in shared_stream_plan:
+        failures.append("shared image stream guard plan must record completed status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

@@ -63,7 +63,15 @@ public class ResultActivity extends Activity implements View.OnClickListener {
             InputStream is = null;
             try {
                 is = getContentResolver().openInputStream(uri);
+                if (is == null) {
+                    mResult.setText("Unable to open image.");
+                    return;
+                }
                 Bitmap bitmap = BitmapFactory.decodeStream(is);
+                if (bitmap == null) {
+                    mResult.setText("Unable to decode image.");
+                    return;
+                }
                 mImage.setImageBitmap(bitmap);
                 doOCR(bitmap);
             } catch (FileNotFoundException e) {

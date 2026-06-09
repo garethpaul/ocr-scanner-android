@@ -45,6 +45,8 @@ Helpful reports include:
   before OCR processing.
 - The share intent filter should stay image-only so unsupported text/plain
   content is not routed into OCR image handling.
+- Shared image stream guards should stop OCR when an incoming image stream
+  cannot be opened or decoded.
 - Generated NDK objects, APKs, local SDK paths, and signing material are local
   build outputs and must not be committed.
 
