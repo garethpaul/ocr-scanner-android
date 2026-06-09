@@ -56,6 +56,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   stdout.
 - Image URI decode failures use tagged Android logging instead of dumping stack
   traces.
+- Shared image intents forward their `EXTRA_STREAM` URI into the result screen
+  instead of launching an empty OCR flow.
 
 ## Testing and Verification
 
@@ -79,6 +81,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   to the device or test fixture environment.
 - Keep stdout clear of OCR lifecycle and photo result details.
 - Avoid stack trace dumps around private image URI handling.
+- Shared image intent handling should require an image MIME type and a stream
+  URI before OCR processing starts.
 - Generated NDK outputs under `obj/` are intentionally ignored and should not
   be committed; keep only source, packaged OCR assets, and documented native
   library drops in git.

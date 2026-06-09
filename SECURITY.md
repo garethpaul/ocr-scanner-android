@@ -41,6 +41,8 @@ Helpful reports include:
   stdout.
 - Image URI decode failures should use tagged Android logging instead of stack
   trace dumps.
+- Shared image intents should require an image MIME type and `EXTRA_STREAM` URI
+  before OCR processing.
 - Generated NDK objects, APKs, local SDK paths, and signing material are local
   build outputs and must not be committed.
 

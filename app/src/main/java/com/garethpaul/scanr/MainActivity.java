@@ -35,6 +35,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	private ProgressDialog mProgressDialog;
 	private ImageButton imageButton;
 	private String mCurrentPhotoPath;
+	private boolean mHandledSendIntent;
 	private static final int REQUEST_TAKE_PHOTO = 1;
 	private static final int REQUEST_PICK_PHOTO = 2;
     public static final String DATA_PATH = Environment
@@ -110,9 +111,18 @@ public class MainActivity extends Activity implements OnClickListener {
 		super.onResume();
 
 		Intent intent = getIntent();
-		if (Intent.ACTION_SEND.equals(intent.getAction())) {
-            Intent takePictureIntent = new Intent(this, ResultActivity.class);
-            startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+		if (!mHandledSendIntent && Intent.ACTION_SEND.equals(intent.getAction())) {
+			mHandledSendIntent = true;
+			Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
+			String type = intent.getType();
+			if (imageUri != null && type != null && type.startsWith("image/")) {
+				Intent resultIntent = new Intent(this, ResultActivity.class);
+				resultIntent.setType(type);
+				resultIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+				startActivity(resultIntent);
+			} else {
+				Log.e(TAG, "ACTION_SEND missing image stream");
+			}
 		}
 	}
 

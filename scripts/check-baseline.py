@@ -25,6 +25,7 @@ REQUIRED = [
     "docs/plans/2026-06-09-timestamped-camera-captures.md",
     "docs/plans/2026-06-09-remove-activity-stdout.md",
     "docs/plans/2026-06-09-uri-error-logging.md",
+    "docs/plans/2026-06-09-shared-image-intent.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.properties",
 ]
@@ -78,6 +79,15 @@ def main():
     if "if (mTessOCR != null)" not in main:
         failures.append("MainActivity must guard OCR cleanup")
     for phrase in [
+        "mHandledSendIntent",
+        "Intent.EXTRA_STREAM",
+        'type.startsWith("image/")',
+        'Log.e(TAG, "ACTION_SEND missing image stream")',
+        "startActivity(resultIntent)",
+    ]:
+        if phrase not in main:
+            failures.append(f"MainActivity shared image handling must include {phrase}")
+    for phrase in [
         'new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)',
         'String imageFileName = "JPEG_" + timeStamp',
         "if (!dir.exists() && !dir.mkdirs())",
@@ -105,6 +115,8 @@ def main():
         "if (mTessOCR != null)",
         'Log.e(TAG, "Unable to open image URI", e)',
         'Log.e(TAG, "Unable to close image URI stream", e)',
+        "extras.getParcelable(Intent.EXTRA_STREAM)",
+        "uriOCR(imageUri)",
     ]:
         if phrase not in result:
             failures.append(f"ResultActivity bitmap decode must include {phrase}")
@@ -129,7 +141,7 @@ def main():
         failures.append("generated NDK obj files must not be tracked: " + ", ".join(tracked_obj[:5]))
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
-    for phrase in ["make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace"]:
+    for phrase in ["make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
@@ -145,6 +157,9 @@ def main():
     uri_plan = read("docs/plans/2026-06-09-uri-error-logging.md")
     if "status: completed" not in uri_plan or "printStackTrace" not in uri_plan:
         failures.append("URI error logging plan must record completed status and verification")
+    shared_image_plan = read("docs/plans/2026-06-09-shared-image-intent.md")
+    if "status: completed" not in shared_image_plan or "shared image" not in shared_image_plan:
+        failures.append("shared image intent plan must record completed status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

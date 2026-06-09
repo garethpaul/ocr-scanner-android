@@ -45,8 +45,16 @@ public class ResultActivity extends Activity implements View.OnClickListener {
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             String value = extras.getString("IMAGE_URI");
-            mCurrentPhotoPath = value;
-            setPic();
+            if (value != null) {
+                mCurrentPhotoPath = value;
+                setPic();
+                return;
+            }
+
+            Uri imageUri = (Uri) extras.getParcelable(Intent.EXTRA_STREAM);
+            if (imageUri != null) {
+                uriOCR(imageUri);
+            }
         }
     }
 

@@ -29,6 +29,7 @@ Priority:
 - Keep camera captures from overwriting prior external-storage images
 - Keep activity lifecycle and photo result paths free of stdout prints
 - Keep image URI decode failures observable without stack trace dumps
+- Keep shared image intents routed through explicit stream URI handling
 
 Next priorities:
 
@@ -44,6 +45,7 @@ Contribution rules:
 - Include device or emulator notes for runtime changes.
 - Keep native dependency licenses visible.
 - Do not mix modernization with behavior changes.
+- Preserve shared image intent stream handling when changing OCR entry points.
 
 ## Security And Responsible Use
 
