@@ -35,6 +35,8 @@ Helpful reports include:
 - Camera images, external storage OCR data, and recognized text should be
   treated as private user data. Android backup must remain disabled and native
   OCR debug logging should stay off.
+- Timestamped camera captures reduce accidental overwrites but remain private
+  external-storage data.
 - Generated NDK objects, APKs, local SDK paths, and signing material are local
   build outputs and must not be committed.
 

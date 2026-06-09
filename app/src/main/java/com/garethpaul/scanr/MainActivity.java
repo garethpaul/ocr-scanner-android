@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -158,14 +159,16 @@ public class MainActivity extends Activity implements OnClickListener {
 	 */
 	private File createImageFile() throws IOException {
 		// Create an image file name
-		String imageFileName = "JPEG_";
+		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+		String imageFileName = "JPEG_" + timeStamp;
 		String storageDir = Environment.getExternalStorageDirectory()
                 + "/TessOCR";
 		File dir = new File(storageDir);
-		if (!dir.exists())
-			dir.mkdir();
+		if (!dir.exists() && !dir.mkdirs()) {
+			throw new IOException("Unable to create image directory");
+		}
 
-		File image = new File(storageDir + "/" + imageFileName + ".jpg");
+		File image = new File(dir, imageFileName + ".jpg");
 
 		// Save a file: path for use with ACTION_VIEW intents
 		mCurrentPhotoPath = image.getAbsolutePath();

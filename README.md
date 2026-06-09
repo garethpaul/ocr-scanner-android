@@ -49,6 +49,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Running or Using the Project
 
 - Use Android Studio to open the project or run `./gradlew assembleDebug` when the Android SDK is configured.
+- Camera captures are written to timestamped files under the legacy
+  external-storage `TessOCR` directory so a new capture does not overwrite the
+  previous image.
 
 ## Testing and Verification
 
@@ -68,6 +71,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   disabled and Tesseract debug logging should remain off.
 - The legacy code still uses external storage for image and Tesseract data; do
   not commit captured images, OCR output, or generated device data.
+- Timestamped capture files are still private user data and should remain local
+  to the device or test fixture environment.
 - Generated NDK outputs under `obj/` are intentionally ignored and should not
   be committed; keep only source, packaged OCR assets, and documented native
   library drops in git.

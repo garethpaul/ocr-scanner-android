@@ -22,6 +22,7 @@ REQUIRED = [
     "app/src/main/java/com/garethpaul/scanr/ResultActivity.java",
     "app/src/main/java/com/garethpaul/scanr/TessOCR.java",
     "docs/plans/2026-06-08-ocr-scanner-baseline.md",
+    "docs/plans/2026-06-09-timestamped-camera-captures.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.properties",
 ]
@@ -72,6 +73,14 @@ def main():
         failures.append("MainActivity must guard ActionBar access")
     if "if (mTessOCR != null)" not in main:
         failures.append("MainActivity must guard OCR cleanup")
+    for phrase in [
+        'new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)',
+        'String imageFileName = "JPEG_" + timeStamp',
+        "if (!dir.exists() && !dir.mkdirs())",
+        'new File(dir, imageFileName + ".jpg")',
+    ]:
+        if phrase not in main:
+            failures.append(f"MainActivity camera capture files must include {phrase}")
 
     result = read("app/src/main/java/com/garethpaul/scanr/ResultActivity.java")
     result_super = result.find("super.onCreate(savedInstanceState)")
@@ -110,13 +119,16 @@ def main():
         failures.append("generated NDK obj files must not be tracked: " + ", ".join(tracked_obj[:5]))
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
-    for phrase in ["make check", "OCR", "external storage", "allowBackup", "generated NDK"]:
+    for phrase in ["make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
     plan = read("docs/plans/2026-06-08-ocr-scanner-baseline.md")
     if "status: completed" not in plan or "make check" not in plan:
         failures.append("plan must record completed status and verification")
+    capture_plan = read("docs/plans/2026-06-09-timestamped-camera-captures.md")
+    if "status: completed" not in capture_plan or "timestamped" not in capture_plan:
+        failures.append("capture plan must record completed status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

@@ -26,11 +26,13 @@ Priority:
 - Avoid changing recognition behavior without test material
 - Keep Android backup disabled and native OCR debug logging off
 - Keep generated NDK object files out of source control
+- Keep camera captures from overwriting prior external-storage images
 
 Next priorities:
 
 - Add setup notes for the required Android and NDK toolchain
 - Document where trained OCR data should live and how it is licensed
+- Add explicit cleanup guidance for timestamped capture files
 - Add a small fixture-based smoke test for OCR initialization
 - Modernize Gradle and Android plugin versions in a dedicated compatibility pass
 
