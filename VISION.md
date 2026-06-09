@@ -33,6 +33,7 @@ Priority:
 - Keep shared image intents routed through explicit stream URI handling
 - Keep share intent filters image-only for OCR entry points
 - Keep shared image stream guards before OCR processing
+- Keep OCR traineddata streams closed after asset-copy attempts
 - Keep `make lint`, `make test`, `make build`, and `make check` on the
   SDK-free static baseline
 
@@ -53,6 +54,7 @@ Contribution rules:
 - Preserve shared image intent stream handling when changing OCR entry points.
 - Preserve image-only share filters when changing manifest intent filters.
 - Preserve shared image stream guards when changing shared-image OCR handling.
+- Preserve traineddata stream cleanup when changing OCR asset setup.
 - Run `make lint`, `make test`, `make build`, and `make check` before pushing
   manifest, OCR, or Gradle metadata changes.
 

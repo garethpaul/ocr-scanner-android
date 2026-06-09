@@ -66,6 +66,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   routed into an OCR-only flow.
 - Shared image stream guards stop OCR before processing when the incoming image
   stream cannot be opened or decoded.
+- OCR traineddata streams are closed through a shared cleanup helper after
+  asset copies, including failed copies.
 
 ## Testing and Verification
 
@@ -98,6 +100,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   activity for text/plain content it cannot process.
 - Shared image stream guards should keep null input streams and failed decodes
   from reaching OCR.
+- OCR traineddata streams should be closed after asset-copy attempts, and copy
+  failures should use generic tagged logging.
 - Generated NDK outputs under `obj/` are intentionally ignored and should not
   be committed; keep only source, packaged OCR assets, and documented native
   library drops in git.

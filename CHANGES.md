@@ -17,5 +17,7 @@
 - Added shared image stream guards before OCR processing.
 - Added `make lint`, `make test`, and `make build` aliases so the standard
   gate commands run the same SDK-free static baseline as `make check`.
+- Closed OCR traineddata streams after asset-copy attempts and kept copy
+  failure logs generic.
 - Added `make check` static verification for the legacy Android baseline.
 - Removed tracked generated NDK `obj/` intermediates and ignored future outputs.

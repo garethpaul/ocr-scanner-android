@@ -29,6 +29,7 @@ REQUIRED = [
     "docs/plans/2026-06-09-image-only-share-filter.md",
     "docs/plans/2026-06-09-shared-image-stream-guards.md",
     "docs/plans/2026-06-09-make-gate-aliases.md",
+    "docs/plans/2026-06-09-traineddata-stream-cleanup.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.properties",
 ]
@@ -103,6 +104,17 @@ def main():
     ]:
         if phrase not in main:
             failures.append(f"MainActivity camera capture files must include {phrase}")
+    for phrase in [
+        "InputStream in = null",
+        "OutputStream out = null",
+        'closeQuietly(out, "Unable to close OCR traineddata output")',
+        'closeQuietly(in, "Unable to close OCR traineddata asset")',
+        "private void closeQuietly(Closeable closeable, String message)",
+    ]:
+        if phrase not in main:
+            failures.append(f"MainActivity traineddata stream cleanup must include {phrase}")
+    if "e.toString()" in main:
+        failures.append("MainActivity must not append raw exception details to OCR traineddata logs")
 
     result = read("app/src/main/java/com/garethpaul/scanr/ResultActivity.java")
     if "System.out.println" in result:
@@ -162,7 +174,7 @@ def main():
             failures.append(f"Makefile must include standard gate alias: {phrase}")
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
-    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream"]:
+    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "traineddata streams"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
@@ -191,6 +203,9 @@ def main():
     make_gate_plan = make_gate_plan_path.read_text(encoding="utf-8") if make_gate_plan_path.exists() else ""
     if "status: completed" not in make_gate_plan or "make lint" not in make_gate_plan or "make build" not in make_gate_plan:
         failures.append("make gate alias plan must record completed status and verification")
+    traineddata_stream_plan = read("docs/plans/2026-06-09-traineddata-stream-cleanup.md")
+    if "status: completed" not in traineddata_stream_plan or "traineddata streams" not in traineddata_stream_plan:
+        failures.append("traineddata stream cleanup plan must record completed status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

@@ -1,5 +1,6 @@
 package com.garethpaul.scanr;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -72,12 +73,14 @@ public class MainActivity extends Activity implements OnClickListener {
         // http://code.google.com/p/tesseract-ocr/downloads/list
         // This area needs work and optimization
         if (!(new File(DATA_PATH + "tessdata/" + lang + ".traineddata")).exists()) {
+            InputStream in = null;
+            OutputStream out = null;
             try {
 
                 AssetManager assetManager = getAssets();
-                InputStream in = assetManager.open("tessdata/" + lang + ".traineddata");
+                in = assetManager.open("tessdata/" + lang + ".traineddata");
                 //GZIPInputStream gin = new GZIPInputStream(in);
-                OutputStream out = new FileOutputStream(DATA_PATH
+                out = new FileOutputStream(DATA_PATH
                         + "tessdata/" + lang + ".traineddata");
 
                 // Transfer bytes from in to out
@@ -87,13 +90,14 @@ public class MainActivity extends Activity implements OnClickListener {
                 while ((len = in.read(buf)) > 0) {
                     out.write(buf, 0, len);
                 }
-                in.close();
                 //gin.close();
-                out.close();
 
                 Log.v(TAG, "Copied " + lang + " traineddata");
             } catch (IOException e) {
-                Log.e(TAG, "Was unable to copy " + lang + " traineddata " + e.toString());
+                Log.e(TAG, "Was unable to copy " + lang + " traineddata");
+            } finally {
+                closeQuietly(out, "Unable to close OCR traineddata output");
+                closeQuietly(in, "Unable to close OCR traineddata asset");
             }
         }
 
@@ -141,6 +145,16 @@ public class MainActivity extends Activity implements OnClickListener {
 			mTessOCR.onDestroy();
 		}
 	}
+
+    private void closeQuietly(Closeable closeable, String message) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (IOException e) {
+                Log.e(TAG, message);
+            }
+        }
+    }
 
 	private void dispatchTakePictureIntent() {
 		Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);

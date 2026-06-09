@@ -48,6 +48,8 @@ Helpful reports include:
   content is not routed into OCR image handling.
 - Shared image stream guards should stop OCR when an incoming image stream
   cannot be opened or decoded.
+- OCR traineddata streams should be closed after asset-copy attempts, and copy
+  failures should use generic tagged logging.
 - Generated NDK objects, APKs, local SDK paths, and signing material are local
   build outputs and must not be committed.
 
