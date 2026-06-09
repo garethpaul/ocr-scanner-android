@@ -23,6 +23,7 @@ REQUIRED = [
     "app/src/main/java/com/garethpaul/scanr/TessOCR.java",
     "docs/plans/2026-06-08-ocr-scanner-baseline.md",
     "docs/plans/2026-06-09-timestamped-camera-captures.md",
+    "docs/plans/2026-06-09-remove-activity-stdout.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.properties",
 ]
@@ -65,6 +66,8 @@ def main():
         failures.append("TessOCR must tolerate failed bitmap decodes")
 
     main = read("app/src/main/java/com/garethpaul/scanr/MainActivity.java")
+    if "System.out.println" in main:
+        failures.append("MainActivity must not print OCR lifecycle details to stdout")
     main_super = main.find("super.onCreate(savedInstanceState)")
     main_actionbar = main.find("getActionBar()")
     if main_super == -1 or main_actionbar == -1 or main_super > main_actionbar:
@@ -83,6 +86,8 @@ def main():
             failures.append(f"MainActivity camera capture files must include {phrase}")
 
     result = read("app/src/main/java/com/garethpaul/scanr/ResultActivity.java")
+    if "System.out.println" in result:
+        failures.append("ResultActivity must not print OCR lifecycle details to stdout")
     result_super = result.find("super.onCreate(savedInstanceState)")
     result_actionbar = result.find("getActionBar()")
     if result_super == -1 or result_actionbar == -1 or result_super > result_actionbar:
@@ -119,7 +124,7 @@ def main():
         failures.append("generated NDK obj files must not be tracked: " + ", ".join(tracked_obj[:5]))
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
-    for phrase in ["make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped"]:
+    for phrase in ["make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
@@ -129,6 +134,9 @@ def main():
     capture_plan = read("docs/plans/2026-06-09-timestamped-camera-captures.md")
     if "status: completed" not in capture_plan or "timestamped" not in capture_plan:
         failures.append("capture plan must record completed status and verification")
+    stdout_plan = read("docs/plans/2026-06-09-remove-activity-stdout.md")
+    if "status: completed" not in stdout_plan or "stdout" not in stdout_plan:
+        failures.append("stdout plan must record completed status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

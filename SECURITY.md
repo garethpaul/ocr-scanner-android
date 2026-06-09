@@ -37,6 +37,8 @@ Helpful reports include:
   OCR debug logging should stay off.
 - Timestamped camera captures reduce accidental overwrites but remain private
   external-storage data.
+- Activity lifecycle and photo result paths should not print OCR details to
+  stdout.
 - Generated NDK objects, APKs, local SDK paths, and signing material are local
   build outputs and must not be committed.
 

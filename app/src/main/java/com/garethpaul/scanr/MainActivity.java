@@ -45,7 +45,6 @@ public class MainActivity extends Activity implements OnClickListener {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-        System.out.println("MainActivty");
         ActionBar ab = getActionBar();
         if (ab != null) {
             ab.setDisplayShowTitleEnabled(false);
@@ -112,7 +111,6 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		Intent intent = getIntent();
 		if (Intent.ACTION_SEND.equals(intent.getAction())) {
-            System.out.println("sending to result activity");
             Intent takePictureIntent = new Intent(this, ResultActivity.class);
             startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
 		}

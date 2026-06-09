@@ -156,7 +156,6 @@ public class ResultActivity extends Activity implements View.OnClickListener {
         // TODO Auto-generated method stub
         if (requestCode == REQUEST_TAKE_PHOTO
                 && resultCode == Activity.RESULT_OK) {
-            System.out.println("request photo");
             setPic();
         }
     }

@@ -27,6 +27,7 @@ Priority:
 - Keep Android backup disabled and native OCR debug logging off
 - Keep generated NDK object files out of source control
 - Keep camera captures from overwriting prior external-storage images
+- Keep activity lifecycle and photo result paths free of stdout prints
 
 Next priorities:
 

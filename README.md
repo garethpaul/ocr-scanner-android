@@ -52,6 +52,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Camera captures are written to timestamped files under the legacy
   external-storage `TessOCR` directory so a new capture does not overwrite the
   previous image.
+- Activity lifecycle and photo result paths should not print OCR details to
+  stdout.
 
 ## Testing and Verification
 
@@ -73,6 +75,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
   not commit captured images, OCR output, or generated device data.
 - Timestamped capture files are still private user data and should remain local
   to the device or test fixture environment.
+- Keep stdout clear of OCR lifecycle and photo result details.
 - Generated NDK outputs under `obj/` are intentionally ignored and should not
   be committed; keep only source, packaged OCR assets, and documented native
   library drops in git.
