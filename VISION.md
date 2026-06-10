@@ -27,6 +27,8 @@ Priority:
 - Avoid changing recognition behavior without test material
 - Keep Android backup disabled and native OCR debug logging off
 - Keep generated NDK object files out of source control
+- Keep orphaned gitlinks out of the archive unless a documented submodule is
+  intentionally introduced
 - Keep camera captures from reusing prior external-storage paths, including
   captures started within the same second
 - Keep activity lifecycle and photo result paths free of stdout prints
@@ -61,6 +63,7 @@ Contribution rules:
 - Preserve the image open failure message when changing URI OCR.
 - Preserve traineddata stream cleanup when changing OCR asset setup.
 - Preserve collision-resistant camera file creation when changing capture flow.
+- Preserve the no-orphaned-gitlinks repository baseline.
 - Run `make lint`, `make test`, `make build`, and `make check` before pushing
   manifest, OCR, or Gradle metadata changes.
 

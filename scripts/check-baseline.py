@@ -13,6 +13,7 @@ ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 GRADLE_WRAPPER_SHA256 = "e2b82129ab64751fd40437007bd2f7f2afb3c6e41a9198e628650b22d5824a14"
 HOSTED_VALIDATION_PLAN = "docs/plans/2026-06-10-hosted-static-validation.md"
 UNIQUE_CAPTURE_PLAN = "docs/plans/2026-06-10-unique-camera-captures.md"
+ORPHANED_GITLINK_PLAN = "docs/plans/2026-06-10-remove-orphaned-gitlink.md"
 REQUIRED = [
     ".github/workflows/check.yml",
     ".gitignore",
@@ -38,6 +39,7 @@ REQUIRED = [
     "docs/plans/2026-06-10-image-open-failure-message.md",
     HOSTED_VALIDATION_PLAN,
     UNIQUE_CAPTURE_PLAN,
+    ORPHANED_GITLINK_PLAN,
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.jar",
     "gradle/wrapper/gradle-wrapper.properties",
@@ -182,6 +184,20 @@ def main():
     if tracked_obj:
         failures.append("generated NDK obj files must not be tracked: " + ", ".join(tracked_obj[:5]))
 
+    tracked_gitlinks = [
+        line
+        for line in subprocess.run(
+            ["git", "ls-files", "--stage"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.splitlines()
+        if line.startswith("160000 ")
+    ]
+    if tracked_gitlinks:
+        failures.append("repository must not track orphaned gitlinks without submodule metadata")
+
     makefile = read("Makefile")
     for phrase in [
         ".PHONY: build check lint static-check test verify",
@@ -236,6 +252,9 @@ def main():
     unique_capture_plan = read(UNIQUE_CAPTURE_PLAN)
     if "status: completed" not in unique_capture_plan or "File.createTempFile" not in unique_capture_plan:
         failures.append("unique camera capture plan must record completed status and verification")
+    orphaned_gitlink_plan = read(ORPHANED_GITLINK_PLAN)
+    if "status: completed" not in orphaned_gitlink_plan or "tesseract-android-tools" not in orphaned_gitlink_plan:
+        failures.append("orphaned gitlink plan must record completed status and verification")
     for expected in [
         "permissions:\n  contents: read",
         "cancel-in-progress: true",

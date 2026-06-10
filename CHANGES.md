@@ -8,6 +8,8 @@
   the result screen instead of only logging the failure.
 - Made timestamped camera captures collision-resistant within the same second
   and added sanitized image-file creation failure logging.
+- Removed the unusable `tesseract-android-tools` gitlink, which had no
+  `.gitmodules` metadata and caused hosted checkout cleanup warnings.
 
 ## 2026-06-08
 

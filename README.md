@@ -112,6 +112,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Generated NDK outputs under `obj/` are intentionally ignored and should not
   be committed; keep only source, packaged OCR assets, and documented native
   library drops in git.
+- Keep the repository free of orphaned gitlinks; native OCR source is vendored
+  under `jni/`, and no active submodule contract is declared.
 - Treat the Gradle wrapper JAR as executable build tooling. Review provenance
   before updating its pinned checksum.
 - Review changes touching authentication or token handling; examples from the scan include jni/com_googlecode_tesseract_android/glibc/glob.c.

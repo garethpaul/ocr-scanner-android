@@ -54,6 +54,8 @@ Helpful reports include:
   failures should use generic tagged logging.
 - Generated NDK objects, APKs, local SDK paths, and signing material are local
   build outputs and must not be committed.
+- Do not add executable gitlinks without reviewed `.gitmodules` metadata and a
+  documented provenance and update process.
 
 ## Mobile Privacy Notes
 
