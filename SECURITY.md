@@ -36,8 +36,8 @@ Helpful reports include:
 - Camera images, external storage OCR data, and recognized text should be
   treated as private user data. Android backup must remain disabled and native
   OCR debug logging should stay off.
-- Timestamped camera captures reduce accidental overwrites but remain private
-  external-storage data.
+- Collision-resistant timestamped camera captures prevent same-second path
+  reuse but remain private external-storage data.
 - Activity lifecycle and photo result paths should not print OCR details to
   stdout.
 - Image URI decode failures should use tagged Android logging instead of stack

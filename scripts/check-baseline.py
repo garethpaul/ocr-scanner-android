@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 GRADLE_WRAPPER_SHA256 = "e2b82129ab64751fd40437007bd2f7f2afb3c6e41a9198e628650b22d5824a14"
 HOSTED_VALIDATION_PLAN = "docs/plans/2026-06-10-hosted-static-validation.md"
+UNIQUE_CAPTURE_PLAN = "docs/plans/2026-06-10-unique-camera-captures.md"
 REQUIRED = [
     ".github/workflows/check.yml",
     ".gitignore",
@@ -36,6 +37,7 @@ REQUIRED = [
     "docs/plans/2026-06-09-traineddata-stream-cleanup.md",
     "docs/plans/2026-06-10-image-open-failure-message.md",
     HOSTED_VALIDATION_PLAN,
+    UNIQUE_CAPTURE_PLAN,
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.jar",
     "gradle/wrapper/gradle-wrapper.properties",
@@ -107,10 +109,13 @@ def main():
         'new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)',
         'String imageFileName = "JPEG_" + timeStamp',
         "if (!dir.exists() && !dir.mkdirs())",
-        'new File(dir, imageFileName + ".jpg")',
+        'File.createTempFile(imageFileName + "_", ".jpg", dir)',
+        'Log.e(TAG, "Unable to create camera image")',
     ]:
         if phrase not in main:
             failures.append(f"MainActivity camera capture files must include {phrase}")
+    if 'new File(dir, imageFileName + ".jpg")' in main:
+        failures.append("MainActivity camera captures must not reuse second-resolution paths")
     for phrase in [
         "InputStream in = null",
         "OutputStream out = null",
@@ -228,6 +233,9 @@ def main():
     workflow = read(".github/workflows/check.yml")
     if "status: completed" not in hosted_plan or "wrapper JAR" not in hosted_plan:
         failures.append("hosted static validation plan must record completed status and wrapper verification")
+    unique_capture_plan = read(UNIQUE_CAPTURE_PLAN)
+    if "status: completed" not in unique_capture_plan or "File.createTempFile" not in unique_capture_plan:
+        failures.append("unique camera capture plan must record completed status and verification")
     for expected in [
         "permissions:\n  contents: read",
         "cancel-in-progress: true",

@@ -6,6 +6,8 @@
 - Added a SHA-256 integrity guard for the checked-in Gradle wrapper JAR.
 - Added an image open failure message so unreadable shared image URIs update
   the result screen instead of only logging the failure.
+- Made timestamped camera captures collision-resistant within the same second
+  and added sanitized image-file creation failure logging.
 
 ## 2026-06-08
 

@@ -95,8 +95,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   disabled and Tesseract debug logging should remain off.
 - The legacy code still uses external storage for image and Tesseract data; do
   not commit captured images, OCR output, or generated device data.
-- Timestamped capture files are still private user data and should remain local
-  to the device or test fixture environment.
+- Collision-resistant timestamped capture files are still private user data and
+  should remain local to the device or test fixture environment.
 - Keep stdout clear of OCR lifecycle and photo result details.
 - Avoid stack trace dumps around private image URI handling.
 - Shared image intent handling should require an image MIME type and a stream
@@ -128,6 +128,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   gate aliases.
 - See `docs/plans/2026-06-10-image-open-failure-message.md` for the image open
   failure message guardrail.
+- See `docs/plans/2026-06-10-unique-camera-captures.md` for the camera filename
+  collision guardrail.
 - Keep generated NDK intermediates, APKs, local SDK config, and signing
   material out of the repository.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.

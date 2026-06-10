@@ -165,7 +165,7 @@ public class MainActivity extends Activity implements OnClickListener {
 			try {
 				photoFile = createImageFile();
 			} catch (IOException ex) {
-				// Error occurred while creating the File
+				Log.e(TAG, "Unable to create camera image");
 			}
 			// Continue only if the File was successfully created
 			if (photoFile != null) {
@@ -190,7 +190,7 @@ public class MainActivity extends Activity implements OnClickListener {
 			throw new IOException("Unable to create image directory");
 		}
 
-		File image = new File(dir, imageFileName + ".jpg");
+		File image = File.createTempFile(imageFileName + "_", ".jpg", dir);
 
 		// Save a file: path for use with ACTION_VIEW intents
 		mCurrentPhotoPath = image.getAbsolutePath();
