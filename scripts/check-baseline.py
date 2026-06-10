@@ -30,6 +30,7 @@ REQUIRED = [
     "docs/plans/2026-06-09-shared-image-stream-guards.md",
     "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/plans/2026-06-09-traineddata-stream-cleanup.md",
+    "docs/plans/2026-06-10-image-open-failure-message.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.properties",
 ]
@@ -142,6 +143,11 @@ def main():
     ]:
         if phrase not in result:
             failures.append(f"ResultActivity bitmap decode must include {phrase}")
+    if (
+        "catch (FileNotFoundException e)" not in result
+        or result.count('mResult.setText("Unable to open image.")') < 2
+    ):
+        failures.append("ResultActivity must show a user-facing message when image URI opening fails")
 
     wrapper = read("gradle/wrapper/gradle-wrapper.properties")
     if "https\\://services.gradle.org/distributions/gradle-2.2.1-all.zip" not in wrapper:
@@ -174,7 +180,7 @@ def main():
             failures.append(f"Makefile must include standard gate alias: {phrase}")
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
-    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "traineddata streams"]:
+    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "image open failure message", "traineddata streams"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
@@ -206,6 +212,9 @@ def main():
     traineddata_stream_plan = read("docs/plans/2026-06-09-traineddata-stream-cleanup.md")
     if "status: completed" not in traineddata_stream_plan or "traineddata streams" not in traineddata_stream_plan:
         failures.append("traineddata stream cleanup plan must record completed status and verification")
+    image_open_message_plan = read("docs/plans/2026-06-10-image-open-failure-message.md")
+    if "status: completed" not in image_open_message_plan or "image open failure message" not in image_open_message_plan.lower():
+        failures.append("image open failure message plan must record completed status and verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

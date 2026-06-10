@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-10
+
+- Added an image open failure message so unreadable shared image URIs update
+  the result screen instead of only logging the failure.
+
 ## 2026-06-08
 
 - Disabled app backup for the OCR scanner sample.

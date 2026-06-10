@@ -66,6 +66,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   routed into an OCR-only flow.
 - Shared image stream guards stop OCR before processing when the incoming image
   stream cannot be opened or decoded.
+- The image open failure message keeps unreadable shared image URIs visible in
+  the result screen without exposing raw URI details.
 - OCR traineddata streams are closed through a shared cleanup helper after
   asset copies, including failed copies.
 
@@ -100,6 +102,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   activity for text/plain content it cannot process.
 - Shared image stream guards should keep null input streams and failed decodes
   from reaching OCR.
+- The image open failure message should remain user-facing when a shared image
+  URI cannot be opened.
 - OCR traineddata streams should be closed after asset-copy attempts, and copy
   failures should use generic tagged logging.
 - Generated NDK outputs under `obj/` are intentionally ignored and should not
@@ -117,6 +121,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   manifest permissions, OCR setup, image decode paths, or Gradle metadata.
 - See `docs/plans/2026-06-09-make-gate-aliases.md` for the local verification
   gate aliases.
+- See `docs/plans/2026-06-10-image-open-failure-message.md` for the image open
+  failure message guardrail.
 - Keep generated NDK intermediates, APKs, local SDK config, and signing
   material out of the repository.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.

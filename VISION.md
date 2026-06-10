@@ -33,6 +33,7 @@ Priority:
 - Keep shared image intents routed through explicit stream URI handling
 - Keep share intent filters image-only for OCR entry points
 - Keep shared image stream guards before OCR processing
+- Keep the image open failure message visible for unreadable shared image URIs
 - Keep OCR traineddata streams closed after asset-copy attempts
 - Keep `make lint`, `make test`, `make build`, and `make check` on the
   SDK-free static baseline
@@ -54,6 +55,7 @@ Contribution rules:
 - Preserve shared image intent stream handling when changing OCR entry points.
 - Preserve image-only share filters when changing manifest intent filters.
 - Preserve shared image stream guards when changing shared-image OCR handling.
+- Preserve the image open failure message when changing URI OCR.
 - Preserve traineddata stream cleanup when changing OCR asset setup.
 - Run `make lint`, `make test`, `make build`, and `make check` before pushing
   manifest, OCR, or Gradle metadata changes.
@@ -67,6 +69,8 @@ Canonical security policy and reporting:
 OCR apps can process sensitive images and text. Future changes should keep all
 sample processing local unless network behavior is explicit, documented, and
 controlled by the user.
+The image open failure message should keep unreadable shared image URIs visible
+to the user without adding raw URI details to the UI.
 
 ## What We Will Not Merge (For Now)
 

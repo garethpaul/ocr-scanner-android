@@ -76,6 +76,7 @@ public class ResultActivity extends Activity implements View.OnClickListener {
                 doOCR(bitmap);
             } catch (FileNotFoundException e) {
                 Log.e(TAG, "Unable to open image URI", e);
+                mResult.setText("Unable to open image.");
             } finally {
                 if (is != null) {
                     try {
