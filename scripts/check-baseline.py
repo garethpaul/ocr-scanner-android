@@ -2,6 +2,7 @@
 """Static baseline checks for the legacy Android OCR scanner."""
 
 from pathlib import Path
+import hashlib
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -9,7 +10,10 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
+GRADLE_WRAPPER_SHA256 = "e2b82129ab64751fd40437007bd2f7f2afb3c6e41a9198e628650b22d5824a14"
+HOSTED_VALIDATION_PLAN = "docs/plans/2026-06-10-hosted-static-validation.md"
 REQUIRED = [
+    ".github/workflows/check.yml",
     ".gitignore",
     "CHANGES.md",
     "Makefile",
@@ -31,7 +35,9 @@ REQUIRED = [
     "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/plans/2026-06-09-traineddata-stream-cleanup.md",
     "docs/plans/2026-06-10-image-open-failure-message.md",
+    HOSTED_VALIDATION_PLAN,
     "docs/readme-overview.svg",
+    "gradle/wrapper/gradle-wrapper.jar",
     "gradle/wrapper/gradle-wrapper.properties",
 ]
 
@@ -152,6 +158,9 @@ def main():
     wrapper = read("gradle/wrapper/gradle-wrapper.properties")
     if "https\\://services.gradle.org/distributions/gradle-2.2.1-all.zip" not in wrapper:
         failures.append("Gradle wrapper URL must stay HTTPS")
+    wrapper_jar = (ROOT / "gradle/wrapper/gradle-wrapper.jar").read_bytes()
+    if hashlib.sha256(wrapper_jar).hexdigest() != GRADLE_WRAPPER_SHA256:
+        failures.append("Gradle wrapper JAR checksum changed without a reviewed baseline update")
 
     gitignore = read(".gitignore")
     for expected in ["local.properties", ".gradle", "build/", "obj/", "*.apk", "*.jks", "*.keystore"]:
@@ -180,7 +189,7 @@ def main():
             failures.append(f"Makefile must include standard gate alias: {phrase}")
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
-    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "image open failure message", "traineddata streams"]:
+    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "image open failure message", "traineddata streams", "Gradle wrapper JAR", "hosted Linux"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
@@ -215,6 +224,22 @@ def main():
     image_open_message_plan = read("docs/plans/2026-06-10-image-open-failure-message.md")
     if "status: completed" not in image_open_message_plan or "image open failure message" not in image_open_message_plan.lower():
         failures.append("image open failure message plan must record completed status and verification")
+    hosted_plan = read(HOSTED_VALIDATION_PLAN)
+    workflow = read(".github/workflows/check.yml")
+    if "status: completed" not in hosted_plan or "wrapper JAR" not in hosted_plan:
+        failures.append("hosted static validation plan must record completed status and wrapper verification")
+    for expected in [
+        "permissions:\n  contents: read",
+        "cancel-in-progress: true",
+        "runs-on: ubuntu-24.04",
+        "timeout-minutes: 10",
+        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+        'python-version: "3.12"',
+        "run: make check",
+    ]:
+        if expected not in workflow:
+            failures.append(f"Check workflow must keep {expected}")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

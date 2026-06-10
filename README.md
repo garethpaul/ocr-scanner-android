@@ -79,6 +79,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check`
 - `python3 scripts/check-baseline.py`
 - `./gradlew test` or Android Studio's test runner when the SDK is configured
+- Pinned hosted Linux validation runs the SDK-free baseline on Python 3.12.
+- The baseline verifies the checked-in Gradle wrapper JAR against SHA-256
+  `e2b82129ab64751fd40437007bd2f7f2afb3c6e41a9198e628650b22d5824a14`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -109,6 +112,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Generated NDK outputs under `obj/` are intentionally ignored and should not
   be committed; keep only source, packaged OCR assets, and documented native
   library drops in git.
+- Treat the Gradle wrapper JAR as executable build tooling. Review provenance
+  before updating its pinned checksum.
 - Review changes touching authentication or token handling; examples from the scan include jni/com_googlecode_tesseract_android/glibc/glob.c.
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include app/src/main/AndroidManifest.xml, app/src/main/java/com/garethpaul/scanr/MainActivity.java, app/src/main/res/layout/activity_main.xml, app/src/main/res/layout/activity_result.xml, and 6 more.
 - Review changes touching mobile permissions or privacy-sensitive device data; examples from the scan include app/src/main/AndroidManifest.xml, app/src/main/java/com/garethpaul/scanr/MainActivity.java, gradlew, jni/com_googlecode_leptonica_android/box.cpp, and 6 more.
