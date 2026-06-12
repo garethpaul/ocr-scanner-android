@@ -3,6 +3,7 @@
 
 from pathlib import Path
 import hashlib
+import re
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -50,6 +51,14 @@ REQUIRED = [
 
 def read(relative_path):
     return (ROOT / relative_path).read_text(encoding="utf-8", errors="replace")
+
+
+def markdown_section(text, heading):
+    match = re.search(
+        rf"(?ms)^## {re.escape(heading)}\s*$\n(.*?)(?=^## |\Z)",
+        text,
+    )
+    return match.group(1).strip() if match else ""
 
 
 def main():
@@ -267,8 +276,31 @@ def main():
     if "status: completed" not in orphaned_gitlink_plan or "tesseract-android-tools" not in orphaned_gitlink_plan:
         failures.append("orphaned gitlink plan must record completed status and verification")
     shared_image_access_plan = read(SHARED_IMAGE_ACCESS_PLAN)
-    if "status: completed" not in shared_image_access_plan or "SecurityException" not in shared_image_access_plan:
-        failures.append("shared image access denial plan must record completed status and verification")
+    shared_image_status = re.findall(r"(?mi)^status:\s*(.+?)\s*$", shared_image_access_plan)
+    shared_image_work = markdown_section(shared_image_access_plan, "Work Completed")
+    shared_image_verification = markdown_section(shared_image_access_plan, "Verification Completed")
+    if shared_image_status != ["completed"] or not shared_image_work:
+        failures.append("shared image access denial plan must record one completed status and completed work")
+    if not shared_image_verification or re.search(
+        r"(?i)\b(?:pending|todo|tbd|not run)\b", shared_image_verification
+    ):
+        failures.append("shared image access denial plan must record completed verification")
+    for evidence in [
+        "make lint",
+        "make test",
+        "make build",
+        "make check",
+        "git diff --check",
+        "python3 -m py_compile scripts/check-baseline.py",
+        "27398025031",
+        "27398031226",
+        "bbe4ce1f337f73f27477849a195bf732bcdfe5fb",
+        "catch (SecurityException e)",
+        'Log.e(TAG, "Image URI access denied")',
+        'mResult.setText("Unable to open image.")',
+    ]:
+        if evidence not in shared_image_verification:
+            failures.append(f"shared image access verification must record {evidence}")
     for expected in [
         "permissions:\n  contents: read",
         "cancel-in-progress: true",
