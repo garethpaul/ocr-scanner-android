@@ -75,14 +75,17 @@ public class ResultActivity extends Activity implements View.OnClickListener {
                 mImage.setImageBitmap(bitmap);
                 doOCR(bitmap);
             } catch (FileNotFoundException e) {
-                Log.e(TAG, "Unable to open image URI", e);
+                Log.e(TAG, "Unable to open image URI");
+                mResult.setText("Unable to open image.");
+            } catch (SecurityException e) {
+                Log.e(TAG, "Image URI access denied");
                 mResult.setText("Unable to open image.");
             } finally {
                 if (is != null) {
                     try {
                         is.close();
                     } catch (IOException e) {
-                        Log.e(TAG, "Unable to close image URI stream", e);
+                        Log.e(TAG, "Unable to close image URI stream");
                     }
                 }
             }

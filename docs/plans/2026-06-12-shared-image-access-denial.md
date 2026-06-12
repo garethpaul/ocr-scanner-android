@@ -1,6 +1,6 @@
 # Shared Image Access Denial
 
-status: planned
+status: completed
 
 ## Context
 
@@ -25,10 +25,14 @@ image URIs are not logged directly.
 
 ## Verification
 
-- `make lint`
-- `make test`
-- `make build`
-- `make check`
-- Mutations removing the `SecurityException` catch or restoring throwable
-  logging are rejected by `make check`.
-- `git diff --check`
+- `make lint` passed on 2026-06-12.
+- `make test` passed on 2026-06-12.
+- `make build` passed on 2026-06-12.
+- `make check` passed on 2026-06-12.
+- `make check` rejected a mutation removing the `SecurityException` catch on
+  2026-06-12.
+- `make check` rejected a mutation restoring the throwable payload on the image
+  URI open log on 2026-06-12.
+- `make check` rejected a mutation removing the denied-access user message on
+  2026-06-12.
+- `git diff --check` passed on 2026-06-12.

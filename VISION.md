@@ -37,6 +37,7 @@ Priority:
 - Keep share intent filters image-only for OCR entry points
 - Keep shared image stream guards before OCR processing
 - Keep the image open failure message visible for unreadable shared image URIs
+- Keep denied shared image access from crashing or leaking URI exception details
 - Keep OCR traineddata streams closed after asset-copy attempts
 - Keep `make lint`, `make test`, `make build`, and `make check` on the
   SDK-free static baseline
@@ -61,6 +62,7 @@ Contribution rules:
 - Preserve image-only share filters when changing manifest intent filters.
 - Preserve shared image stream guards when changing shared-image OCR handling.
 - Preserve the image open failure message when changing URI OCR.
+- Preserve denied shared image access handling and sanitized URI failure logs.
 - Preserve traineddata stream cleanup when changing OCR asset setup.
 - Preserve collision-resistant camera file creation when changing capture flow.
 - Preserve the no-orphaned-gitlinks repository baseline.
