@@ -14,6 +14,7 @@ GRADLE_WRAPPER_SHA256 = "e2b82129ab64751fd40437007bd2f7f2afb3c6e41a9198e628650b2
 HOSTED_VALIDATION_PLAN = "docs/plans/2026-06-10-hosted-static-validation.md"
 UNIQUE_CAPTURE_PLAN = "docs/plans/2026-06-10-unique-camera-captures.md"
 ORPHANED_GITLINK_PLAN = "docs/plans/2026-06-10-remove-orphaned-gitlink.md"
+SHARED_IMAGE_ACCESS_PLAN = "docs/plans/2026-06-12-shared-image-access-denial.md"
 REQUIRED = [
     ".github/workflows/check.yml",
     ".gitignore",
@@ -40,6 +41,7 @@ REQUIRED = [
     HOSTED_VALIDATION_PLAN,
     UNIQUE_CAPTURE_PLAN,
     ORPHANED_GITLINK_PLAN,
+    SHARED_IMAGE_ACCESS_PLAN,
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.jar",
     "gradle/wrapper/gradle-wrapper.properties",
@@ -147,8 +149,10 @@ def main():
         "Unable to decode image.",
         "if (mProgressDialog != null)",
         "if (mTessOCR != null)",
-        'Log.e(TAG, "Unable to open image URI", e)',
-        'Log.e(TAG, "Unable to close image URI stream", e)',
+        'Log.e(TAG, "Unable to open image URI")',
+        'catch (SecurityException e)',
+        'Log.e(TAG, "Image URI access denied")',
+        'Log.e(TAG, "Unable to close image URI stream")',
         "if (is == null)",
         'mResult.setText("Unable to open image.")',
         "extras.getParcelable(Intent.EXTRA_STREAM)",
@@ -158,9 +162,16 @@ def main():
             failures.append(f"ResultActivity bitmap decode must include {phrase}")
     if (
         "catch (FileNotFoundException e)" not in result
-        or result.count('mResult.setText("Unable to open image.")') < 2
+        or result.count('mResult.setText("Unable to open image.")') < 3
     ):
         failures.append("ResultActivity must show a user-facing message when image URI opening fails")
+    for unsafe_log in [
+        'Log.e(TAG, "Unable to open image URI", e)',
+        'Log.e(TAG, "Image URI access denied", e)',
+        'Log.e(TAG, "Unable to close image URI stream", e)',
+    ]:
+        if unsafe_log in result:
+            failures.append("ResultActivity image URI logs must not include exception payloads")
 
     wrapper = read("gradle/wrapper/gradle-wrapper.properties")
     if "https\\://services.gradle.org/distributions/gradle-2.2.1-all.zip" not in wrapper:
@@ -210,7 +221,7 @@ def main():
             failures.append(f"Makefile must include standard gate alias: {phrase}")
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
-    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "image open failure message", "traineddata streams", "Gradle wrapper JAR", "hosted Linux"]:
+    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "image open failure message", "denied shared image access", "traineddata streams", "Gradle wrapper JAR", "hosted Linux"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
@@ -255,6 +266,9 @@ def main():
     orphaned_gitlink_plan = read(ORPHANED_GITLINK_PLAN)
     if "status: completed" not in orphaned_gitlink_plan or "tesseract-android-tools" not in orphaned_gitlink_plan:
         failures.append("orphaned gitlink plan must record completed status and verification")
+    shared_image_access_plan = read(SHARED_IMAGE_ACCESS_PLAN)
+    if "status: completed" not in shared_image_access_plan or "SecurityException" not in shared_image_access_plan:
+        failures.append("shared image access denial plan must record completed status and verification")
     for expected in [
         "permissions:\n  contents: read",
         "cancel-in-progress: true",
