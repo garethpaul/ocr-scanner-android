@@ -2,6 +2,7 @@
 """Static baseline checks for the legacy Android OCR scanner."""
 
 from pathlib import Path
+import hashlib
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -9,7 +10,13 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
+GRADLE_WRAPPER_SHA256 = "e2b82129ab64751fd40437007bd2f7f2afb3c6e41a9198e628650b22d5824a14"
+HOSTED_VALIDATION_PLAN = "docs/plans/2026-06-10-hosted-static-validation.md"
+UNIQUE_CAPTURE_PLAN = "docs/plans/2026-06-10-unique-camera-captures.md"
+ORPHANED_GITLINK_PLAN = "docs/plans/2026-06-10-remove-orphaned-gitlink.md"
 REQUIRED = [
+    ".github/CODEOWNERS",
+    ".github/workflows/check.yml",
     ".gitignore",
     "CHANGES.md",
     "Makefile",
@@ -31,7 +38,11 @@ REQUIRED = [
     "docs/plans/2026-06-09-make-gate-aliases.md",
     "docs/plans/2026-06-09-traineddata-stream-cleanup.md",
     "docs/plans/2026-06-10-image-open-failure-message.md",
+    HOSTED_VALIDATION_PLAN,
+    UNIQUE_CAPTURE_PLAN,
+    ORPHANED_GITLINK_PLAN,
     "docs/readme-overview.svg",
+    "gradle/wrapper/gradle-wrapper.jar",
     "gradle/wrapper/gradle-wrapper.properties",
 ]
 
@@ -101,10 +112,13 @@ def main():
         'new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)',
         'String imageFileName = "JPEG_" + timeStamp',
         "if (!dir.exists() && !dir.mkdirs())",
-        'new File(dir, imageFileName + ".jpg")',
+        'File.createTempFile(imageFileName + "_", ".jpg", dir)',
+        'Log.e(TAG, "Unable to create camera image")',
     ]:
         if phrase not in main:
             failures.append(f"MainActivity camera capture files must include {phrase}")
+    if 'new File(dir, imageFileName + ".jpg")' in main:
+        failures.append("MainActivity camera captures must not reuse second-resolution paths")
     for phrase in [
         "InputStream in = null",
         "OutputStream out = null",
@@ -152,6 +166,9 @@ def main():
     wrapper = read("gradle/wrapper/gradle-wrapper.properties")
     if "https\\://services.gradle.org/distributions/gradle-2.2.1-all.zip" not in wrapper:
         failures.append("Gradle wrapper URL must stay HTTPS")
+    wrapper_jar = (ROOT / "gradle/wrapper/gradle-wrapper.jar").read_bytes()
+    if hashlib.sha256(wrapper_jar).hexdigest() != GRADLE_WRAPPER_SHA256:
+        failures.append("Gradle wrapper JAR checksum changed without a reviewed baseline update")
 
     gitignore = read(".gitignore")
     for expected in ["local.properties", ".gradle", "build/", "obj/", "*.apk", "*.jks", "*.keystore"]:
@@ -168,6 +185,20 @@ def main():
     if tracked_obj:
         failures.append("generated NDK obj files must not be tracked: " + ", ".join(tracked_obj[:5]))
 
+    tracked_gitlinks = [
+        line
+        for line in subprocess.run(
+            ["git", "ls-files", "--stage"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.splitlines()
+        if line.startswith("160000 ")
+    ]
+    if tracked_gitlinks:
+        failures.append("repository must not track orphaned gitlinks without submodule metadata")
+
     makefile = read("Makefile")
     for phrase in [
         ".PHONY: build check lint static-check test verify",
@@ -180,7 +211,7 @@ def main():
             failures.append(f"Makefile must include standard gate alias: {phrase}")
 
     docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
-    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "image open failure message", "traineddata streams"]:
+    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "image open failure message", "traineddata streams", "Gradle wrapper JAR", "hosted Linux"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
@@ -215,6 +246,35 @@ def main():
     image_open_message_plan = read("docs/plans/2026-06-10-image-open-failure-message.md")
     if "status: completed" not in image_open_message_plan or "image open failure message" not in image_open_message_plan.lower():
         failures.append("image open failure message plan must record completed status and verification")
+    hosted_plan = read(HOSTED_VALIDATION_PLAN)
+    workflow = read(".github/workflows/check.yml")
+    codeowners = read(".github/CODEOWNERS")
+    if "status: completed" not in hosted_plan or "wrapper JAR" not in hosted_plan:
+        failures.append("hosted static validation plan must record completed status and wrapper verification")
+    unique_capture_plan = read(UNIQUE_CAPTURE_PLAN)
+    if "status: completed" not in unique_capture_plan or "File.createTempFile" not in unique_capture_plan:
+        failures.append("unique camera capture plan must record completed status and verification")
+    orphaned_gitlink_plan = read(ORPHANED_GITLINK_PLAN)
+    if "status: completed" not in orphaned_gitlink_plan or "tesseract-android-tools" not in orphaned_gitlink_plan:
+        failures.append("orphaned gitlink plan must record completed status and verification")
+    for expected in [
+        "permissions:\n  contents: read",
+        "cancel-in-progress: true",
+        "runs-on: ubuntu-24.04",
+        "timeout-minutes: 10",
+        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        "persist-credentials: false",
+        "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+        'python-version: "3.12"',
+        "run: make check",
+    ]:
+        if expected not in workflow:
+            failures.append(f"Check workflow must keep {expected}")
+    workflow_files = sorted(str(path.relative_to(ROOT)) for path in (ROOT / ".github/workflows").rglob("*") if path.is_file())
+    if workflow_files != [".github/workflows/check.yml"]:
+        failures.append("check.yml must be the repository's only hosted workflow")
+    if codeowners.strip() != "* @garethpaul":
+        failures.append("CODEOWNERS must assign the repository to @garethpaul")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

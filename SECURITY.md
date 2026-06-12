@@ -36,8 +36,8 @@ Helpful reports include:
 - Camera images, external storage OCR data, and recognized text should be
   treated as private user data. Android backup must remain disabled and native
   OCR debug logging should stay off.
-- Timestamped camera captures reduce accidental overwrites but remain private
-  external-storage data.
+- Collision-resistant timestamped camera captures prevent same-second path
+  reuse but remain private external-storage data.
 - Activity lifecycle and photo result paths should not print OCR details to
   stdout.
 - Image URI decode failures should use tagged Android logging instead of stack
@@ -54,12 +54,19 @@ Helpful reports include:
   failures should use generic tagged logging.
 - Generated NDK objects, APKs, local SDK paths, and signing material are local
   build outputs and must not be committed.
+- Do not add executable gitlinks without reviewed `.gitmodules` metadata and a
+  documented provenance and update process.
 
 ## Mobile Privacy Notes
 
 If this project requests device permissions such as location, camera, microphone, contacts, Bluetooth, health data, or local storage access, reports should describe the permission involved and whether sensitive data can be accessed, persisted, or transmitted unexpectedly. Please avoid testing against real third-party user data or accounts you do not control.
 
 ## Dependency and Supply Chain Security
+
+- The checked-in Gradle wrapper JAR is pinned by SHA-256 in the static baseline.
+  Treat checksum changes as executable build-tool updates requiring provenance
+  review.
+- Pinned, read-only hosted Linux validation runs the same baseline used locally.
 
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
 

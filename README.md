@@ -79,6 +79,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check`
 - `python3 scripts/check-baseline.py`
 - `./gradlew test` or Android Studio's test runner when the SDK is configured
+- Pinned hosted Linux validation runs the SDK-free baseline on Python 3.12.
+- The baseline verifies the checked-in Gradle wrapper JAR against SHA-256
+  `e2b82129ab64751fd40437007bd2f7f2afb3c6e41a9198e628650b22d5824a14`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -92,8 +95,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   disabled and Tesseract debug logging should remain off.
 - The legacy code still uses external storage for image and Tesseract data; do
   not commit captured images, OCR output, or generated device data.
-- Timestamped capture files are still private user data and should remain local
-  to the device or test fixture environment.
+- Collision-resistant timestamped capture files are still private user data and
+  should remain local to the device or test fixture environment.
 - Keep stdout clear of OCR lifecycle and photo result details.
 - Avoid stack trace dumps around private image URI handling.
 - Shared image intent handling should require an image MIME type and a stream
@@ -109,6 +112,10 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Generated NDK outputs under `obj/` are intentionally ignored and should not
   be committed; keep only source, packaged OCR assets, and documented native
   library drops in git.
+- Keep the repository free of orphaned gitlinks; native OCR source is vendored
+  under `jni/`, and no active submodule contract is declared.
+- Treat the Gradle wrapper JAR as executable build tooling. Review provenance
+  before updating its pinned checksum.
 - Review changes touching authentication or token handling; examples from the scan include jni/com_googlecode_tesseract_android/glibc/glob.c.
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include app/src/main/AndroidManifest.xml, app/src/main/java/com/garethpaul/scanr/MainActivity.java, app/src/main/res/layout/activity_main.xml, app/src/main/res/layout/activity_result.xml, and 6 more.
 - Review changes touching mobile permissions or privacy-sensitive device data; examples from the scan include app/src/main/AndroidManifest.xml, app/src/main/java/com/garethpaul/scanr/MainActivity.java, gradlew, jni/com_googlecode_leptonica_android/box.cpp, and 6 more.
@@ -123,6 +130,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   gate aliases.
 - See `docs/plans/2026-06-10-image-open-failure-message.md` for the image open
   failure message guardrail.
+- See `docs/plans/2026-06-10-unique-camera-captures.md` for the camera filename
+  collision guardrail.
 - Keep generated NDK intermediates, APKs, local SDK config, and signing
   material out of the repository.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
