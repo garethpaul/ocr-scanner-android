@@ -15,6 +15,7 @@ HOSTED_VALIDATION_PLAN = "docs/plans/2026-06-10-hosted-static-validation.md"
 UNIQUE_CAPTURE_PLAN = "docs/plans/2026-06-10-unique-camera-captures.md"
 ORPHANED_GITLINK_PLAN = "docs/plans/2026-06-10-remove-orphaned-gitlink.md"
 REQUIRED = [
+    ".github/CODEOWNERS",
     ".github/workflows/check.yml",
     ".gitignore",
     "CHANGES.md",
@@ -247,6 +248,7 @@ def main():
         failures.append("image open failure message plan must record completed status and verification")
     hosted_plan = read(HOSTED_VALIDATION_PLAN)
     workflow = read(".github/workflows/check.yml")
+    codeowners = read(".github/CODEOWNERS")
     if "status: completed" not in hosted_plan or "wrapper JAR" not in hosted_plan:
         failures.append("hosted static validation plan must record completed status and wrapper verification")
     unique_capture_plan = read(UNIQUE_CAPTURE_PLAN)
@@ -261,12 +263,18 @@ def main():
         "runs-on: ubuntu-24.04",
         "timeout-minutes: 10",
         "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        "persist-credentials: false",
         "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
         'python-version: "3.12"',
         "run: make check",
     ]:
         if expected not in workflow:
             failures.append(f"Check workflow must keep {expected}")
+    workflow_files = sorted(str(path.relative_to(ROOT)) for path in (ROOT / ".github/workflows").rglob("*") if path.is_file())
+    if workflow_files != [".github/workflows/check.yml"]:
+        failures.append("check.yml must be the repository's only hosted workflow")
+    if codeowners.strip() != "* @garethpaul":
+        failures.append("CODEOWNERS must assign the repository to @garethpaul")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")
