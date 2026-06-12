@@ -42,7 +42,8 @@ Priority:
 - Keep `make lint`, `make test`, `make build`, and `make check` on the
   SDK-free static baseline
 - Keep the Gradle wrapper JAR checksum explicit and reviewed
-- Keep the SDK-free baseline running in pinned, read-only hosted Linux CI
+- Keep the SDK-free baseline running in pinned, read-only, credential-free
+  hosted Linux CI
 
 Next priorities:
 

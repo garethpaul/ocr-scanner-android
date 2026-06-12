@@ -68,7 +68,8 @@ If this project requests device permissions such as location, camera, microphone
 - The checked-in Gradle wrapper JAR is pinned by SHA-256 in the static baseline.
   Treat checksum changes as executable build-tool updates requiring provenance
   review.
-- Pinned, read-only hosted Linux validation runs the same baseline used locally.
+- Pinned, read-only hosted Linux validation uses a credential-free checkout and
+  runs the same baseline used locally without persisting repository credentials.
 
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
 
