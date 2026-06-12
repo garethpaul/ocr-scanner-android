@@ -50,6 +50,8 @@ Helpful reports include:
   cannot be opened or decoded.
 - The image open failure message should tell users when a shared image URI
   cannot be opened without exposing raw URI details.
+- Denied shared image access should fail closed with the same user-facing
+  message, and URI open/close logs must omit exception payloads.
 - OCR traineddata streams should be closed after asset-copy attempts, and copy
   failures should use generic tagged logging.
 - Generated NDK objects, APKs, local SDK paths, and signing material are local

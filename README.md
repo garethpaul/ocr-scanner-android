@@ -68,6 +68,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   stream cannot be opened or decoded.
 - The image open failure message keeps unreadable shared image URIs visible in
   the result screen without exposing raw URI details.
+- Denied shared image access is handled like a missing image instead of
+  crashing, and URI open/close logs omit exception payloads.
 - OCR traineddata streams are closed through a shared cleanup helper after
   asset copies, including failed copies.
 
@@ -107,6 +109,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   from reaching OCR.
 - The image open failure message should remain user-facing when a shared image
   URI cannot be opened.
+- Keep denied shared image access user-safe and keep provider, path, and
+  exception details out of URI failure logs.
 - OCR traineddata streams should be closed after asset-copy attempts, and copy
   failures should use generic tagged logging.
 - Generated NDK outputs under `obj/` are intentionally ignored and should not

@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-12
+
+- Handled denied shared-image URI access without crashing and removed exception
+  payloads from URI open and stream-close logs.
+
 ## 2026-06-10
 
 - Added pinned, read-only hosted Linux validation for the SDK-free baseline.
