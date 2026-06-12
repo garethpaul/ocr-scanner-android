@@ -2,6 +2,8 @@
 
 ## 2026-06-12
 
+- Disabled checkout credential persistence in the pinned, read-only hosted
+  validation job and added structural checks for that boundary.
 - Handled denied shared-image URI access without crashing and removed exception
   payloads from URI open and stream-close logs.
 

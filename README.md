@@ -81,7 +81,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check`
 - `python3 scripts/check-baseline.py`
 - `./gradlew test` or Android Studio's test runner when the SDK is configured
-- Pinned hosted Linux validation runs the SDK-free baseline on Python 3.12.
+- Pinned hosted Linux validation uses a read-only, credential-free checkout and
+  runs the SDK-free baseline on Python 3.12.
 - The baseline verifies the checked-in Gradle wrapper JAR against SHA-256
   `e2b82129ab64751fd40437007bd2f7f2afb3c6e41a9198e628650b22d5824a14`.
 
