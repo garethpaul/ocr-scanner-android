@@ -10,6 +10,21 @@ import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
+EXPECTED_MAKEFILE = """ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
+.PHONY: build check lint static-check test verify
+
+PYTHON ?= python3
+
+check: verify
+
+verify: static-check
+
+lint test build: static-check
+
+static-check:
+\tPYTHONDONTWRITEBYTECODE=1 $(PYTHON) "$(ROOT)/scripts/check-baseline.py"
+"""
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 GRADLE_WRAPPER_SHA256 = "e2b82129ab64751fd40437007bd2f7f2afb3c6e41a9198e628650b22d5824a14"
 HOSTED_VALIDATION_PLAN = "docs/plans/2026-06-10-hosted-static-validation.md"
@@ -18,6 +33,7 @@ ORPHANED_GITLINK_PLAN = "docs/plans/2026-06-10-remove-orphaned-gitlink.md"
 SHARED_IMAGE_ACCESS_PLAN = "docs/plans/2026-06-12-shared-image-access-denial.md"
 CHECKOUT_CREDENTIAL_PLAN = "docs/plans/2026-06-12-checkout-credential-boundary.md"
 TOOLCHAIN_PLAN = "docs/plans/2026-06-13-legacy-toolchain-notes.md"
+LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-make.md"
 REQUIRED = [
     ".github/workflows/check.yml",
     ".gitignore",
@@ -47,6 +63,7 @@ REQUIRED = [
     SHARED_IMAGE_ACCESS_PLAN,
     CHECKOUT_CREDENTIAL_PLAN,
     TOOLCHAIN_PLAN,
+    LOCATION_INDEPENDENT_MAKE_PLAN,
     "docs/legacy-toolchain.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.jar",
@@ -246,19 +263,29 @@ def main():
         failures.append("repository must not track orphaned gitlinks without submodule metadata")
 
     makefile = read("Makefile")
-    for phrase in [
-        ".PHONY: build check lint static-check test verify",
-        "check: verify",
-        "verify: static-check",
-        "lint test build: static-check",
-        "PYTHONDONTWRITEBYTECODE=1 $(PYTHON) scripts/check-baseline.py",
-    ]:
-        if phrase not in makefile:
-            failures.append(f"Makefile must include standard gate alias: {phrase}")
+    if makefile != EXPECTED_MAKEFILE:
+        failures.append(
+            "Makefile must exactly preserve rooted SDK-free aliases and the Python override"
+        )
 
+    readme = read("README.md")
     docs = " ".join("\n".join(
-        read(path) for path in ["README.md", "SECURITY.md", "VISION.md"]
+        [readme, read("SECURITY.md"), read("VISION.md")]
     ).split())
+    location_independent_make_plan = read(LOCATION_INDEPENDENT_MAKE_PLAN)
+    if "make -f /path/to/ocr-scanner-android/Makefile check" not in readme:
+        failures.append("README must document location-independent Makefile invocation")
+    if not all(
+        evidence in location_independent_make_plan.lower()
+        for evidence in [
+            "status: completed",
+            "root and external-directory",
+            "six isolated hostile mutations",
+        ]
+    ):
+        failures.append(
+            "location-independent Make plan must record completed root, external, and mutation verification"
+        )
     for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "image open failure message", "denied shared image access", "traineddata streams", "Gradle wrapper JAR", "hosted Linux"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")

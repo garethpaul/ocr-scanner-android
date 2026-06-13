@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Made every SDK-free Make alias resolve the static checker from the checkout
+  when the Makefile is invoked by absolute path.
 - Documented the exact declared Gradle, Android SDK, support-library, and native
   build assumptions while marking JDK/NDK versions and rebuild status unverified.
 

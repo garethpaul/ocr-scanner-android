@@ -1,6 +1,6 @@
 # Location-Independent OCR Scanner Verification
 
-status: in progress
+status: completed
 
 ## Context
 
@@ -40,3 +40,25 @@ mutation verification after it completes.
   handling.
 - Do not run Android, JNI, APK, emulator, device, or OCR builds.
 - Preserve the existing stacked PR chain and exact-head evidence.
+
+## Work Completed
+
+- Rooted every SDK-free Make alias at the checkout containing the loaded
+  Makefile while preserving the target graph and `PYTHON` override.
+- Added exact Makefile, README invocation, completed status, and verification
+  evidence contracts to `scripts/check-baseline.py`.
+- Documented absolute Makefile invocation without changing Android, JNI,
+  Gradle, binary, or workflow behavior.
+
+## Verification Completed
+
+- Root and external-directory `lint`, `test`, `build`, `verify`, and `check`
+  gates passed through the checkout's absolute Makefile path.
+- `python3 -m py_compile scripts/check-baseline.py` and `git diff --check`
+  passed.
+- Six isolated hostile mutations covering root derivation, checker resolution,
+  alias delegation, the Python override, completed plan evidence, and README
+  invocation guidance were rejected by the intended contracts.
+- Protected Gradle, wrapper, manifest, Java, JNI, native-library, resource,
+  test, workflow, OCR, privacy, secret-pattern, and generated-artifact paths
+  had no diff or passed their audits.

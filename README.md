@@ -86,6 +86,9 @@ build an APK, start an emulator, or exercise OCR behavior.
 - `make test`
 - `make build`
 - `make check`
+- The Make gates are location-independent. From another directory, pass the
+  checkout's Makefile by absolute path, such as
+  `make -f /path/to/ocr-scanner-android/Makefile check`.
 - `python3 scripts/check-baseline.py`
 - `./gradlew test` or Android Studio's test runner when the SDK is configured
 - Pinned hosted Linux validation uses a read-only, credential-free checkout and
@@ -140,6 +143,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - This looks like a legacy Android project or sample. Expect Android SDK, Gradle, and support-library versions to matter.
 - Run `make lint`, `make test`, `make build`, and `make check` before changing
   manifest permissions, OCR setup, image decode paths, or Gradle metadata.
+- Use an absolute Makefile path when running those SDK-free gates outside the
+  checkout.
 - See `docs/plans/2026-06-09-make-gate-aliases.md` for the local verification
   gate aliases.
 - See `docs/plans/2026-06-10-image-open-failure-message.md` for the image open
