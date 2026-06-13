@@ -34,6 +34,10 @@ Additional scan context:
 ### Prerequisites
 
 - Git
+- The repository's verification commands require Python 3 only.
+- An Android rebuild would require the historical toolchain described in
+  [`docs/legacy-toolchain.md`](docs/legacy-toolchain.md); exact JDK and NDK
+  versions are not declared or verified.
 - Android Studio or a compatible Android SDK
 - Gradle or the checked-in Gradle wrapper when present
 
@@ -49,6 +53,9 @@ make check
 ```
 
 The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
+
+These Make targets are static checks. They do not run Gradle, compile JNI code,
+build an APK, start an emulator, or exercise OCR behavior.
 
 ## Running or Using the Project
 
@@ -121,6 +128,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   under `jni/`, and no active submodule contract is declared.
 - Treat the Gradle wrapper JAR as executable build tooling. Review provenance
   before updating its pinned checksum.
+- Keep declared Gradle 2.2.1, Android plugin 1.1.0, SDK/build-tools levels, and
+  GNU STL/ABI assumptions separate from claims of a successful modern rebuild.
 - Review changes touching authentication or token handling; examples from the scan include jni/com_googlecode_tesseract_android/glibc/glob.c.
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include app/src/main/AndroidManifest.xml, app/src/main/java/com/garethpaul/scanr/MainActivity.java, app/src/main/res/layout/activity_main.xml, app/src/main/res/layout/activity_result.xml, and 6 more.
 - Review changes touching mobile permissions or privacy-sensitive device data; examples from the scan include app/src/main/AndroidManifest.xml, app/src/main/java/com/garethpaul/scanr/MainActivity.java, gradlew, jni/com_googlecode_leptonica_android/box.cpp, and 6 more.

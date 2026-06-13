@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-13
+
+- Documented the exact declared Gradle, Android SDK, support-library, and native
+  build assumptions while marking JDK/NDK versions and rebuild status unverified.
+
 ## 2026-06-12
 
 - Disabled checkout credential persistence in the pinned, read-only hosted

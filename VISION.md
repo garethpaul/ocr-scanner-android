@@ -44,10 +44,12 @@ Priority:
 - Keep the Gradle wrapper JAR checksum explicit and reviewed
 - Keep the SDK-free baseline running in pinned, read-only, credential-free
   hosted Linux CI
+- Keep exact declared toolchain metadata separate from unverified rebuild claims
 
 Next priorities:
 
-- Add setup notes for the required Android and NDK toolchain
+- Identify independently verifiable JDK and NDK versions for the historical
+  build, if available
 - Document where trained OCR data should live and how it is licensed
 - Add explicit cleanup guidance for timestamped capture files
 - Add a small fixture-based smoke test for OCR initialization

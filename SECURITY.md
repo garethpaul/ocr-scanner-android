@@ -68,6 +68,9 @@ If this project requests device permissions such as location, camera, microphone
 - The checked-in Gradle wrapper JAR is pinned by SHA-256 in the static baseline.
   Treat checksum changes as executable build-tool updates requiring provenance
   review.
+- The declared Gradle, Android plugin, SDK, support-library, JCenter, GNU STL,
+  and ABI metadata is historical. Do not source obsolete JDK, SDK, NDK, wrapper,
+  or binary components from untrusted mirrors to reproduce the build.
 - Pinned, read-only hosted Linux validation uses a credential-free checkout and
   runs the same baseline used locally without persisting repository credentials.
 
