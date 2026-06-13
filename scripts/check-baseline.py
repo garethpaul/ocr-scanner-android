@@ -17,6 +17,7 @@ UNIQUE_CAPTURE_PLAN = "docs/plans/2026-06-10-unique-camera-captures.md"
 ORPHANED_GITLINK_PLAN = "docs/plans/2026-06-10-remove-orphaned-gitlink.md"
 SHARED_IMAGE_ACCESS_PLAN = "docs/plans/2026-06-12-shared-image-access-denial.md"
 CHECKOUT_CREDENTIAL_PLAN = "docs/plans/2026-06-12-checkout-credential-boundary.md"
+TOOLCHAIN_PLAN = "docs/plans/2026-06-13-legacy-toolchain-notes.md"
 REQUIRED = [
     ".github/workflows/check.yml",
     ".gitignore",
@@ -45,6 +46,8 @@ REQUIRED = [
     ORPHANED_GITLINK_PLAN,
     SHARED_IMAGE_ACCESS_PLAN,
     CHECKOUT_CREDENTIAL_PLAN,
+    TOOLCHAIN_PLAN,
+    "docs/legacy-toolchain.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.jar",
     "gradle/wrapper/gradle-wrapper.properties",
@@ -191,6 +194,28 @@ def main():
     if hashlib.sha256(wrapper_jar).hexdigest() != GRADLE_WRAPPER_SHA256:
         failures.append("Gradle wrapper JAR checksum changed without a reviewed baseline update")
 
+    root_gradle = read("build.gradle")
+    app_gradle = read("app/build.gradle")
+    native_application = read("jni/Application.mk")
+    for path, text, phrases in [
+        ("build.gradle", root_gradle, ["com.android.tools.build:gradle:1.1.0", "jcenter()"]),
+        ("app/build.gradle", app_gradle, [
+            "compileSdkVersion 21",
+            'buildToolsVersion "22.0.1"',
+            "minSdkVersion 18",
+            "targetSdkVersion 18",
+            "com.android.support:support-v4:21.0.3",
+            "libs/classes.jar",
+        ]),
+        ("jni/Application.mk", native_application, [
+            "APP_STL := gnustl_static",
+            "APP_ABI := armeabi armeabi-v7a x86 mips",
+        ]),
+    ]:
+        for phrase in phrases:
+            if phrase not in text:
+                failures.append(f"{path} must retain declared legacy toolchain value {phrase}")
+
     gitignore = read(".gitignore")
     for expected in ["local.properties", ".gradle", "build/", "obj/", "*.apk", "*.jks", "*.keystore"]:
         if expected not in gitignore:
@@ -231,10 +256,35 @@ def main():
         if phrase not in makefile:
             failures.append(f"Makefile must include standard gate alias: {phrase}")
 
-    docs = "\n".join(read(path) for path in ["README.md", "SECURITY.md", "VISION.md"])
+    docs = " ".join("\n".join(
+        read(path) for path in ["README.md", "SECURITY.md", "VISION.md"]
+    ).split())
     for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "image open failure message", "denied shared image access", "traineddata streams", "Gradle wrapper JAR", "hosted Linux"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
+
+    toolchain = " ".join(read("docs/legacy-toolchain.md").split())
+    for phrase in [
+        "Verification status: declared metadata only; Android and JNI rebuild not run",
+        "gradle-2.2.1-all.zip",
+        "com.android.tools.build:gradle:1.1.0",
+        "compile SDK: 21",
+        "Android build tools: 22.0.1",
+        "minimum SDK: 18",
+        "target SDK: 18",
+        "com.android.support:support-v4:21.0.3",
+        "app/libs/classes.jar",
+        "dependency repository: JCenter",
+        "does not pin an exact JDK version",
+        "does not pin an exact NDK version",
+        "gnustl_static",
+        "armeabi-v7a",
+        "They do not invoke Gradle",
+    ]:
+        if phrase not in toolchain:
+            failures.append(f"legacy toolchain note must include {phrase}")
+    if "[`docs/legacy-toolchain.md`](docs/legacy-toolchain.md)" not in read("README.md"):
+        failures.append("README must link the legacy toolchain note")
 
     plan = read("docs/plans/2026-06-08-ocr-scanner-baseline.md")
     if "status: completed" not in plan or "make check" not in plan:
@@ -362,6 +412,30 @@ def main():
             "checkout credential plan must record one completed status, "
             "completed work, and make check verification"
         )
+
+    toolchain_plan = read(TOOLCHAIN_PLAN)
+    toolchain_status = re.findall(r"(?mi)^status:\s*(.+?)\s*$", toolchain_plan)
+    toolchain_work = markdown_section(toolchain_plan, "Work Completed")
+    toolchain_verification = markdown_section(toolchain_plan, "Verification Completed")
+    if toolchain_status != ["completed"] or not toolchain_work:
+        failures.append("legacy toolchain plan must record completed status and work")
+    if not toolchain_verification or re.search(
+        r"(?i)\b(?:pending|todo|tbd|not run)\b", toolchain_verification
+    ):
+        failures.append("legacy toolchain plan must record completed verification")
+    for evidence in [
+        "python3 -m py_compile scripts/check-baseline.py",
+        "make lint",
+        "make test",
+        "make build",
+        "make check",
+        "external working directory",
+        "hostile mutations rejected",
+        "protected build paths had no diff",
+        "git diff --check",
+    ]:
+        if evidence not in toolchain_verification:
+            failures.append(f"legacy toolchain verification must record {evidence}")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

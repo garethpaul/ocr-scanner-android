@@ -1,6 +1,6 @@
 # Legacy Toolchain Notes
 
-status: planned
+status: completed
 
 ## Context
 
@@ -63,6 +63,40 @@ completed plan status, and local verification evidence.
   diff
 - `git diff --check`
 - scan the intended diff for secrets and generated artifacts
+
+## Work Completed
+
+- Added one reference for the exact Gradle, Android plugin, SDK, build-tools,
+  support-library, JCenter, classes JAR, GNU STL, and ABI declarations.
+- Marked exact JDK and NDK versions as undeclared and the Android/JNI rebuild as
+  unverified.
+- Clarified that Make targets run static contracts only and do not build an APK,
+  compile native code, start an emulator, or exercise OCR.
+- Added repository, security, vision, changelog, and static checker guardrails
+  without changing build metadata, source, or binaries.
+
+## Verification Completed
+
+Completed locally on 2026-06-13:
+
+- `python3 -m py_compile scripts/check-baseline.py`
+- `make lint`
+- `make test`
+- `make build`
+- `make check`
+- workflow YAML and Android manifest XML parsed successfully
+- the checker passed from an external working directory
+- nine focused hostile mutations rejected a false rebuild claim, Gradle version
+  drift, guessed JDK and NDK versions, a false Gradle-execution claim, a stale
+  README link, compile SDK drift, incomplete status, and unfinished evidence
+- protected build paths had no diff, including Gradle metadata, wrapper files,
+  Android manifest and Java source, JNI makefiles and source, and vendored JARs
+- `git diff --check`
+
+The Make gates and hostile mutation suite first passed against a disposable
+indexed copy with completed-plan evidence. The complete static gates were then
+rerun against this completed plan in the repository worktree. No Android, JNI,
+APK, emulator, device, or OCR build/runtime validation was claimed.
 
 ## Boundaries
 
