@@ -79,6 +79,8 @@ build an APK, start an emulator, or exercise OCR behavior.
   crashing, and URI open/close logs omit exception payloads.
 - OCR traineddata streams are closed through a shared cleanup helper after
   asset copies, including failed copies.
+- The OCR worker lifecycle guard serializes native recognition and teardown,
+  blocks destroyed-activity UI delivery, and clears the progress dialog.
 
 ## Testing and Verification
 

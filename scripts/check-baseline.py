@@ -34,6 +34,7 @@ SHARED_IMAGE_ACCESS_PLAN = "docs/plans/2026-06-12-shared-image-access-denial.md"
 CHECKOUT_CREDENTIAL_PLAN = "docs/plans/2026-06-12-checkout-credential-boundary.md"
 TOOLCHAIN_PLAN = "docs/plans/2026-06-13-legacy-toolchain-notes.md"
 LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-make.md"
+OCR_LIFECYCLE_PLAN = "docs/plans/2026-06-14-ocr-worker-lifecycle-guard.md"
 REQUIRED = [
     ".github/workflows/check.yml",
     ".gitignore",
@@ -64,6 +65,7 @@ REQUIRED = [
     CHECKOUT_CREDENTIAL_PLAN,
     TOOLCHAIN_PLAN,
     LOCATION_INDEPENDENT_MAKE_PLAN,
+    OCR_LIFECYCLE_PLAN,
     "docs/legacy-toolchain.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.jar",
@@ -117,7 +119,7 @@ def main():
         failures.append("TessOCR must keep native OCR debug logging disabled")
     if "System.out.println(DATA_PATH" in tess:
         failures.append("TessOCR must not print external storage paths")
-    if "if (bitmap == null)" not in tess:
+    if "bitmap == null" not in tess:
         failures.append("TessOCR must tolerate failed bitmap decodes")
 
     main = read("app/src/main/java/com/garethpaul/scanr/MainActivity.java")
@@ -203,6 +205,41 @@ def main():
     ]:
         if unsafe_log in result:
             failures.append("ResultActivity image URI logs must not include exception payloads")
+    for phrase in [
+        "private volatile boolean mDestroyed",
+        "final TessOCR tessOCR = mTessOCR",
+        "tessOCR.getOCRResult(bitmap)",
+        "mProgressDialog = null",
+        "mTessOCR = null",
+    ]:
+        if phrase not in result:
+            failures.append(f"ResultActivity OCR lifecycle guard must include {phrase}")
+    if result.count("if (mDestroyed)") < 2:
+        failures.append("ResultActivity must guard both worker posting and UI result delivery after destruction")
+    destroyed_index = result.find("mDestroyed = true")
+    dialog_index = result.find("mProgressDialog.dismiss()", destroyed_index)
+    dialog_clear_index = result.find("mProgressDialog = null", dialog_index)
+    teardown_index = result.find("mTessOCR.onDestroy()", destroyed_index)
+    super_destroy_index = result.find("super.onDestroy()", destroyed_index)
+    if not (
+        destroyed_index != -1
+        and dialog_index > destroyed_index
+        and dialog_clear_index > dialog_index
+        and teardown_index > dialog_clear_index
+        and super_destroy_index > teardown_index
+    ):
+        failures.append("ResultActivity destruction must mark state, dismiss UI, end OCR, then call super")
+
+    tess_ocr = read("app/src/main/java/com/garethpaul/scanr/TessOCR.java")
+    for phrase in [
+        "public synchronized String getOCRResult(Bitmap bitmap)",
+        "if (bitmap == null || mTess == null)",
+        "public synchronized void onDestroy()",
+        "mTess.end()",
+        "mTess = null",
+    ]:
+        if phrase not in tess_ocr:
+            failures.append(f"TessOCR lifecycle ownership must include {phrase}")
 
     wrapper = read("gradle/wrapper/gradle-wrapper.properties")
     if "https\\://services.gradle.org/distributions/gradle-2.2.1-all.zip" not in wrapper:
@@ -286,7 +323,7 @@ def main():
         failures.append(
             "location-independent Make plan must record completed root, external, and mutation verification"
         )
-    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "image open failure message", "denied shared image access", "traineddata streams", "Gradle wrapper JAR", "hosted Linux"]:
+    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "image open failure message", "denied shared image access", "traineddata streams", "Gradle wrapper JAR", "hosted Linux", "OCR worker lifecycle guard"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
 
@@ -463,6 +500,29 @@ def main():
     ]:
         if evidence not in toolchain_verification:
             failures.append(f"legacy toolchain verification must record {evidence}")
+
+    lifecycle_plan = read(OCR_LIFECYCLE_PLAN)
+    lifecycle_status = re.findall(r"(?mi)^status:\s*(.+?)\s*$", lifecycle_plan)
+    lifecycle_work = markdown_section(lifecycle_plan, "Work Completed")
+    lifecycle_verification = markdown_section(lifecycle_plan, "Verification Completed")
+    if (lifecycle_status != ["completed"] or not lifecycle_work or
+            not lifecycle_verification or re.search(
+                r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                lifecycle_verification,
+            )):
+        failures.append("OCR worker lifecycle plan must record completed work and verification")
+    for evidence in [
+        "python3 -m py_compile scripts/check-baseline.py",
+        "make lint",
+        "make test",
+        "make build",
+        "make check",
+        "external working directory",
+        "hostile mutations",
+        "git diff --check",
+    ]:
+        if evidence not in lifecycle_verification:
+            failures.append(f"OCR worker lifecycle verification must record {evidence}")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

@@ -45,6 +45,7 @@ Priority:
 - Keep the SDK-free baseline running in pinned, read-only, credential-free
   hosted Linux CI
 - Keep exact declared toolchain metadata separate from unverified rebuild claims
+- Keep the OCR worker lifecycle guard around native teardown and UI delivery
 
 Next priorities:
 

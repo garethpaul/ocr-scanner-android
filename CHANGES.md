@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-14
+
+- Serialized native OCR execution and teardown, blocked worker/UI delivery
+  after activity destruction, and cleared the progress dialog during teardown.
+
 ## 2026-06-13
 
 - Made every SDK-free Make alias resolve the static checker from the checkout

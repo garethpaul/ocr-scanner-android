@@ -24,6 +24,7 @@ public class ResultActivity extends Activity implements View.OnClickListener {
     private ImageView mImage;
     private TessOCR mTessOCR;
     private TextView mResult;
+    private volatile boolean mDestroyed;
     private static final int REQUEST_TAKE_PHOTO = 1;
     private static final int REQUEST_PICK_PHOTO = 2;
     private static final String TAG = "OCR";
@@ -98,6 +99,11 @@ public class ResultActivity extends Activity implements View.OnClickListener {
             return;
         }
 
+        final TessOCR tessOCR = mTessOCR;
+        if (mDestroyed || tessOCR == null) {
+            return;
+        }
+
         if (mProgressDialog == null) {
             mProgressDialog = ProgressDialog.show(this, "Processing",
                     "Doing OCR...", true);
@@ -109,19 +115,26 @@ public class ResultActivity extends Activity implements View.OnClickListener {
         new Thread(new Runnable() {
             public void run() {
 
-                final String result = mTessOCR.getOCRResult(bitmap);
+                final String result = tessOCR.getOCRResult(bitmap);
+                if (mDestroyed) {
+                    return;
+                }
 
                 runOnUiThread(new Runnable() {
 
                     @Override
                     public void run() {
                         // TODO Auto-generated method stub
+                        if (mDestroyed) {
+                            return;
+                        }
                         if (result != null && !result.equals("")) {
                             mResult.setText(result);
                         }
 
                         if (mProgressDialog != null) {
                             mProgressDialog.dismiss();
+                            mProgressDialog = null;
                         }
                     }
 
@@ -196,10 +209,16 @@ public class ResultActivity extends Activity implements View.OnClickListener {
     @Override
 	protected void onDestroy() {
 		// TODO Auto-generated method stub
-		super.onDestroy();
+		mDestroyed = true;
+        if (mProgressDialog != null) {
+            mProgressDialog.dismiss();
+            mProgressDialog = null;
+        }
         if (mTessOCR != null) {
             mTessOCR.onDestroy();
+            mTessOCR = null;
         }
+		super.onDestroy();
 	}
 
     @Override

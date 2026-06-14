@@ -18,18 +18,20 @@ public class TessOCR {
 
 	}
 	
-	public String getOCRResult(Bitmap bitmap) {
-        if (bitmap == null) {
+    public synchronized String getOCRResult(Bitmap bitmap) {
+        if (bitmap == null || mTess == null) {
             return "";
         }
-		mTess.setImage(bitmap);
-		String result = mTess.getUTF8Text();
-		return result;
+        mTess.setImage(bitmap);
+        String result = mTess.getUTF8Text();
+        return result;
     }
-	
-	public void onDestroy() {
-		if (mTess != null)
-			mTess.end();
-	}
-	
+
+    public synchronized void onDestroy() {
+        if (mTess != null) {
+            mTess.end();
+            mTess = null;
+        }
+    }
+
 }

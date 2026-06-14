@@ -54,6 +54,8 @@ Helpful reports include:
   message, and URI open/close logs must omit exception payloads.
 - OCR traineddata streams should be closed after asset-copy attempts, and copy
   failures should use generic tagged logging.
+- The OCR worker lifecycle guard should serialize native recognition and
+  teardown and prevent results from reaching a destroyed activity.
 - Generated NDK objects, APKs, local SDK paths, and signing material are local
   build outputs and must not be committed.
 - Do not add executable gitlinks without reviewed `.gitmodules` metadata and a
