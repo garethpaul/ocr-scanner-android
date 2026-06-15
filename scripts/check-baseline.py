@@ -35,6 +35,7 @@ CHECKOUT_CREDENTIAL_PLAN = "docs/plans/2026-06-12-checkout-credential-boundary.m
 TOOLCHAIN_PLAN = "docs/plans/2026-06-13-legacy-toolchain-notes.md"
 LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-make.md"
 OCR_LIFECYCLE_PLAN = "docs/plans/2026-06-14-ocr-worker-lifecycle-guard.md"
+LAUNCHER_OCR_PLAN = "docs/plans/2026-06-15-remove-unused-launcher-ocr.md"
 REQUIRED = [
     ".github/workflows/check.yml",
     ".gitignore",
@@ -66,6 +67,7 @@ REQUIRED = [
     TOOLCHAIN_PLAN,
     LOCATION_INDEPENDENT_MAKE_PLAN,
     OCR_LIFECYCLE_PLAN,
+    LAUNCHER_OCR_PLAN,
     "docs/legacy-toolchain.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.jar",
@@ -131,8 +133,16 @@ def main():
         failures.append("MainActivity must call super.onCreate before ActionBar access")
     if "if (ab != null)" not in main:
         failures.append("MainActivity must guard ActionBar access")
-    if "if (mTessOCR != null)" not in main:
-        failures.append("MainActivity must guard OCR cleanup")
+    for forbidden_launcher_ocr in [
+        "private TessOCR mTessOCR;",
+        "mTessOCR = new TessOCR()",
+        "mTessOCR.onDestroy()",
+    ]:
+        if forbidden_launcher_ocr in main:
+            failures.append(
+                "MainActivity must not own an unused OCR engine: "
+                + forbidden_launcher_ocr
+            )
     for phrase in [
         "mHandledSendIntent",
         "Intent.EXTRA_STREAM",
@@ -214,6 +224,8 @@ def main():
     ]:
         if phrase not in result:
             failures.append(f"ResultActivity OCR lifecycle guard must include {phrase}")
+    if result.count("new TessOCR()") != 1:
+        failures.append("ResultActivity must remain the sole activity OCR engine owner")
     if result.count("if (mDestroyed)") < 2:
         failures.append("ResultActivity must guard both worker posting and UI result delivery after destruction")
     destroyed_index = result.find("mDestroyed = true")
@@ -323,9 +335,14 @@ def main():
         failures.append(
             "location-independent Make plan must record completed root, external, and mutation verification"
         )
-    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "image open failure message", "denied shared image access", "traineddata streams", "Gradle wrapper JAR", "hosted Linux", "OCR worker lifecycle guard"]:
+    for phrase in ["make lint", "make test", "make build", "make check", "OCR", "external storage", "allowBackup", "generated NDK", "timestamped", "stdout", "stack trace", "shared image", "image-only", "shared image stream", "image open failure message", "denied shared image access", "traineddata streams", "Gradle wrapper JAR", "hosted Linux", "OCR worker lifecycle guard", "native OCR engine ownership"]:
         if phrase.lower() not in docs.lower():
             failures.append(f"docs must mention {phrase}")
+    guidance_documents = [
+        read(path).lower() for path in ["README.md", "SECURITY.md", "VISION.md"]
+    ]
+    if not all("native ocr engine ownership" in document for document in guidance_documents):
+        failures.append("all guidance must keep the result-screen OCR ownership boundary")
 
     toolchain = " ".join(read("docs/legacy-toolchain.md").split())
     for phrase in [
@@ -523,6 +540,32 @@ def main():
     ]:
         if evidence not in lifecycle_verification:
             failures.append(f"OCR worker lifecycle verification must record {evidence}")
+
+    launcher_ocr_plan = read(LAUNCHER_OCR_PLAN)
+    launcher_ocr_status = re.findall(r"(?mi)^status:\s*(.+?)\s*$", launcher_ocr_plan)
+    launcher_ocr_work = markdown_section(launcher_ocr_plan, "Work Completed")
+    launcher_ocr_verification = markdown_section(
+        launcher_ocr_plan, "Verification Completed"
+    )
+    if (launcher_ocr_status != ["completed"] or not launcher_ocr_work or
+            not launcher_ocr_verification or re.search(
+                r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                launcher_ocr_verification,
+            )):
+        failures.append("launcher OCR ownership plan must record completed work and verification")
+    for evidence in [
+        "python3 -m py_compile scripts/check-baseline.py",
+        "make lint",
+        "make test",
+        "make build",
+        "make check",
+        "external working directory",
+        "Six isolated hostile mutations",
+        "git diff --check",
+        "protected Gradle, manifest, JNI, wrapper, asset, and binary path checks",
+    ]:
+        if evidence not in launcher_ocr_verification:
+            failures.append(f"launcher OCR ownership verification must record {evidence}")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

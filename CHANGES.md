@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-15
+
+- Removed the launcher's unused native OCR wrapper so `ResultActivity` remains
+  the sole activity owner of Tesseract recognition resources.
+
 ## 2026-06-14
 
 - Serialized native OCR execution and teardown, blocked worker/UI delivery

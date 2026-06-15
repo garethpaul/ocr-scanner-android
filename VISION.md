@@ -46,6 +46,7 @@ Priority:
   hosted Linux CI
 - Keep exact declared toolchain metadata separate from unverified rebuild claims
 - Keep the OCR worker lifecycle guard around native teardown and UI delivery
+- Keep native OCR engine ownership in `ResultActivity`, not the launcher
 
 Next priorities:
 

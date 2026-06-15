@@ -32,7 +32,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 public class MainActivity extends Activity implements OnClickListener {
-	private TessOCR mTessOCR;
 	private ProgressDialog mProgressDialog;
 	private ImageButton imageButton;
 	private String mCurrentPhotoPath;
@@ -104,7 +103,6 @@ public class MainActivity extends Activity implements OnClickListener {
 		setContentView(R.layout.activity_main);
 		imageButton = (ImageButton) findViewById(R.id.imageButton);
 		imageButton.setOnClickListener(this);
-		mTessOCR = new TessOCR();
 	}
 
 
@@ -134,16 +132,6 @@ public class MainActivity extends Activity implements OnClickListener {
 	protected void onPause() {
 		// TODO Auto-generated method stub
 		super.onPause();
-	}
-
-	@Override
-	protected void onDestroy() {
-		// TODO Auto-generated method stub
-		super.onDestroy();
-
-		if (mTessOCR != null) {
-			mTessOCR.onDestroy();
-		}
 	}
 
     private void closeQuietly(Closeable closeable, String message) {
