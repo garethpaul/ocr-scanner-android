@@ -1,6 +1,6 @@
 # Remove Unused Launcher Progress State
 
-status: in_progress
+status: completed
 
 ## Context
 
@@ -34,8 +34,22 @@ boundary explicit in portable checks and guidance.
 
 ## Work Completed
 
-Pending implementation.
+- Removed the unused `ProgressDialog` import and `mProgressDialog` field from
+  `MainActivity`.
+- Preserved `ResultActivity` progress creation, display, completion dismissal,
+  and destruction cleanup.
+- Added mutation-sensitive ownership contracts and synchronized guidance.
 
 ## Verification Completed
 
-Pending implementation and validation.
+- `python3 -m py_compile scripts/check-baseline.py`, `make lint`, `make test`,
+  `make build`, and `make check` passed.
+- `make check` passed from an external working directory through the absolute
+  Makefile path.
+- Five isolated hostile mutations covering the launcher import, launcher field,
+  result-screen progress assignment, guidance, and plan evidence were rejected.
+- `git diff --check`, generated-artifact inspection, credential-pattern review,
+  and protected Gradle, manifest, JNI, wrapper, asset, and binary path checks
+  passed.
+- The legacy Android build, APK, emulator, native OCR, and device lifecycle were
+  not executed or claimed on this Linux host.

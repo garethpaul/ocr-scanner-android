@@ -83,6 +83,8 @@ build an APK, start an emulator, or exercise OCR behavior.
   blocks destroyed-activity UI delivery, and clears the progress dialog.
 - Native OCR engine ownership stays in `ResultActivity`; the launcher does not
   initialize an unused second Tesseract engine.
+- Launcher progress state is absent from `MainActivity`; active OCR progress
+  display and teardown remain owned by `ResultActivity`.
 
 ## Testing and Verification
 

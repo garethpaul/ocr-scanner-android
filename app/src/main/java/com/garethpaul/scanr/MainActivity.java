@@ -13,7 +13,6 @@ import java.util.Locale;
 
 import android.app.ActionBar;
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -32,7 +31,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 public class MainActivity extends Activity implements OnClickListener {
-	private ProgressDialog mProgressDialog;
 	private ImageButton imageButton;
 	private String mCurrentPhotoPath;
 	private boolean mHandledSendIntent;

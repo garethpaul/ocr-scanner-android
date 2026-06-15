@@ -58,6 +58,8 @@ Helpful reports include:
   teardown and prevent results from reaching a destroyed activity.
 - Keep native OCR engine ownership in `ResultActivity`; `MainActivity` should
   not retain an unused second Tesseract engine.
+- Keep launcher progress state out of `MainActivity`; only `ResultActivity`
+  should own the active OCR progress dialog lifecycle.
 - Generated NDK objects, APKs, local SDK paths, and signing material are local
   build outputs and must not be committed.
 - Do not add executable gitlinks without reviewed `.gitmodules` metadata and a

@@ -4,6 +4,8 @@
 
 - Removed the launcher's unused native OCR wrapper so `ResultActivity` remains
   the sole activity owner of Tesseract recognition resources.
+- Removed unused launcher progress state while preserving `ResultActivity`'s
+  active OCR progress display and teardown.
 
 ## 2026-06-14
 
