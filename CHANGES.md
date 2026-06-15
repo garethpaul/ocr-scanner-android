@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- Added nonblocking OCR teardown so activity destruction does not wait for an
+  in-flight synchronized native recognition call.
 - Added an OCR result generation guard so stale image workers cannot replace a
   newer result or dismiss its progress state.
 - Removed the launcher's unused native OCR wrapper so `ResultActivity` remains

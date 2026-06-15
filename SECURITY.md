@@ -58,6 +58,8 @@ Helpful reports include:
   teardown and prevent results from reaching a destroyed activity.
 - The OCR result generation guard should reject stale image completions before
   result or progress UI mutation.
+- Nonblocking OCR teardown should preserve serialized native shutdown without
+  waiting behind active recognition on the activity thread.
 - Keep native OCR engine ownership in `ResultActivity`; `MainActivity` should
   not retain an unused second Tesseract engine.
 - Keep launcher progress state out of `MainActivity`; only `ResultActivity`

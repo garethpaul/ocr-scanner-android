@@ -47,6 +47,7 @@ Priority:
 - Keep exact declared toolchain metadata separate from unverified rebuild claims
 - Keep the OCR worker lifecycle guard around native teardown and UI delivery
 - Keep the OCR result generation guard around worker handoff and UI mutation
+- Keep nonblocking OCR teardown serialized and off the activity thread
 - Keep native OCR engine ownership in `ResultActivity`, not the launcher
 - Keep launcher progress state absent while preserving result-screen progress ownership
 

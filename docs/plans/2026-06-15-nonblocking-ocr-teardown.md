@@ -1,6 +1,6 @@
 # Nonblocking OCR Teardown
 
-Status: planned
+Status: completed
 
 ## Problem
 
@@ -43,8 +43,20 @@ returns.
 
 ## Work Completed
 
-Pending implementation.
+- Captured and cleared the active OCR wrapper during activity destruction.
+- Started the synchronized native teardown call on a named background thread,
+  preserving serialization behind any active recognition call without making
+  the activity thread wait.
+- Added ordering-sensitive source contracts and synchronized project guidance.
 
 ## Verification Completed
 
-Pending implementation and verification.
+- All four Make gates passed from the repository and the canonical check passed
+  from an external directory.
+- Seven isolated hostile mutations were rejected for direct activity-thread
+  teardown, missing wrapper capture or clear, missing or unnamed teardown
+  thread, reordered lifecycle steps, missing guidance, and stale plan status.
+- Checker compilation, exact diff, artifact, credential, protected-path,
+  conflict-marker, binary, mode, whitespace, and intended-path audits passed.
+- No Android SDK, APK, emulator, device, camera, shared image, or live OCR was
+  exercised.

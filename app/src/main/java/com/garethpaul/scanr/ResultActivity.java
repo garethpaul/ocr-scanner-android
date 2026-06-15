@@ -223,9 +223,14 @@ public class ResultActivity extends Activity implements View.OnClickListener {
             mProgressDialog.dismiss();
             mProgressDialog = null;
         }
-        if (mTessOCR != null) {
-            mTessOCR.onDestroy();
-            mTessOCR = null;
+        final TessOCR tessOCR = mTessOCR;
+        mTessOCR = null;
+        if (tessOCR != null) {
+            new Thread(new Runnable() {
+                public void run() {
+                    tessOCR.onDestroy();
+                }
+            }, "ocr-teardown").start();
         }
 		super.onDestroy();
 	}

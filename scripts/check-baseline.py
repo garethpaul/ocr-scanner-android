@@ -38,6 +38,7 @@ OCR_LIFECYCLE_PLAN = "docs/plans/2026-06-14-ocr-worker-lifecycle-guard.md"
 LAUNCHER_OCR_PLAN = "docs/plans/2026-06-15-remove-unused-launcher-ocr.md"
 LAUNCHER_PROGRESS_PLAN = "docs/plans/2026-06-15-remove-unused-launcher-progress.md"
 OCR_RESULT_GENERATION_PLAN = "docs/plans/2026-06-15-ocr-result-generation-guard.md"
+NONBLOCKING_OCR_TEARDOWN_PLAN = "docs/plans/2026-06-15-nonblocking-ocr-teardown.md"
 REQUIRED = [
     ".github/workflows/check.yml",
     ".gitignore",
@@ -72,6 +73,7 @@ REQUIRED = [
     LAUNCHER_OCR_PLAN,
     LAUNCHER_PROGRESS_PLAN,
     OCR_RESULT_GENERATION_PLAN,
+    NONBLOCKING_OCR_TEARDOWN_PLAN,
     "docs/legacy-toolchain.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.jar",
@@ -204,7 +206,6 @@ def main():
         "if (bitmap == null)",
         "Unable to decode image.",
         "if (mProgressDialog != null)",
-        "if (mTessOCR != null)",
         'Log.e(TAG, "Unable to open image URI")',
         'catch (SecurityException e)',
         'Log.e(TAG, "Image URI access denied")',
@@ -271,17 +272,26 @@ def main():
     generation_invalidation_index = result.find("mOCRGeneration++", destroyed_index)
     dialog_index = result.find("mProgressDialog.dismiss()", destroyed_index)
     dialog_clear_index = result.find("mProgressDialog = null", dialog_index)
-    teardown_index = result.find("mTessOCR.onDestroy()", destroyed_index)
+    wrapper_capture_index = result.find("final TessOCR tessOCR = mTessOCR", destroyed_index)
+    wrapper_clear_index = result.find("mTessOCR = null", wrapper_capture_index)
+    teardown_thread_index = result.find("new Thread(new Runnable()", wrapper_clear_index)
+    teardown_index = result.find("tessOCR.onDestroy()", teardown_thread_index)
+    teardown_name_index = result.find('}, "ocr-teardown").start()', teardown_index)
     super_destroy_index = result.find("super.onDestroy()", destroyed_index)
     if not (
         destroyed_index != -1
         and generation_invalidation_index > destroyed_index
         and dialog_index > generation_invalidation_index
         and dialog_clear_index > dialog_index
-        and teardown_index > dialog_clear_index
-        and super_destroy_index > teardown_index
+        and wrapper_capture_index > dialog_clear_index
+        and wrapper_clear_index > wrapper_capture_index
+        and teardown_thread_index > wrapper_clear_index
+        and teardown_index > teardown_thread_index
+        and teardown_name_index > teardown_index
+        and super_destroy_index > teardown_name_index
+        and "mTessOCR.onDestroy()" not in result
     ):
-        failures.append("ResultActivity destruction must mark state, dismiss UI, end OCR, then call super")
+        failures.append("ResultActivity destruction must detach OCR and schedule named serialized teardown before super")
 
     tess_ocr = read("app/src/main/java/com/garethpaul/scanr/TessOCR.java")
     for phrase in [
@@ -651,6 +661,24 @@ def main():
     for path in ["README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
         if "ocr result generation guard" not in read(path).lower():
             failures.append(f"{path} must document the OCR result generation guard")
+
+    nonblocking_teardown_plan = read(NONBLOCKING_OCR_TEARDOWN_PLAN)
+    nonblocking_teardown_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", nonblocking_teardown_plan
+    )
+    nonblocking_teardown_verification = markdown_section(
+        nonblocking_teardown_plan, "Verification Completed"
+    )
+    if (nonblocking_teardown_status != ["completed"] or
+            "All four Make gates passed" not in nonblocking_teardown_verification or
+            "Seven isolated hostile mutations were rejected" not in nonblocking_teardown_verification or
+            "external directory" not in nonblocking_teardown_verification or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      nonblocking_teardown_verification)):
+        failures.append("nonblocking OCR teardown plan must record completed verification")
+    for path in ["README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
+        if "nonblocking ocr teardown" not in read(path).lower():
+            failures.append(f"{path} must document nonblocking OCR teardown")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")
