@@ -1,6 +1,6 @@
 # OCR Result Generation Guard
 
-Status: planned
+Status: completed
 
 ## Problem
 
@@ -37,3 +37,25 @@ newer progress state.
   exercised on Linux.
 - The change must remain stacked on PR #9; neither pull request may be merged or
   closed without explicit owner authorization.
+
+## Work Completed
+
+- Added a volatile monotonically increasing OCR generation and captured it for
+  each worker start.
+- Rejected stale generations before posting to the UI thread and again before
+  result or progress mutation.
+- Invalidated outstanding generations during destruction before progress and
+  native OCR teardown.
+- Added ordering-sensitive static contracts and synchronized guidance.
+
+## Verification Completed
+
+- All four Make gates passed from the repository and the canonical check passed
+  from an external directory.
+- Seven isolated hostile mutations were rejected for missing capture, missing
+  worker or UI comparison, missing destruction invalidation, reordered stale UI
+  mutation, missing guidance, and stale plan status.
+- Checker compilation, exact diff, artifact, credential, protected-path,
+  conflict-marker, binary, mode, whitespace, and intended-path audits passed.
+- No Android SDK, APK, emulator, device, camera, shared image, or live OCR was
+  exercised.

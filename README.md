@@ -81,6 +81,8 @@ build an APK, start an emulator, or exercise OCR behavior.
   asset copies, including failed copies.
 - The OCR worker lifecycle guard serializes native recognition and teardown,
   blocks destroyed-activity UI delivery, and clears the progress dialog.
+- The OCR result generation guard allows only the newest image worker to update
+  result text or dismiss active progress state.
 - Native OCR engine ownership stays in `ResultActivity`; the launcher does not
   initialize an unused second Tesseract engine.
 - Launcher progress state is absent from `MainActivity`; active OCR progress

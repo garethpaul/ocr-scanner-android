@@ -56,6 +56,8 @@ Helpful reports include:
   failures should use generic tagged logging.
 - The OCR worker lifecycle guard should serialize native recognition and
   teardown and prevent results from reaching a destroyed activity.
+- The OCR result generation guard should reject stale image completions before
+  result or progress UI mutation.
 - Keep native OCR engine ownership in `ResultActivity`; `MainActivity` should
   not retain an unused second Tesseract engine.
 - Keep launcher progress state out of `MainActivity`; only `ResultActivity`

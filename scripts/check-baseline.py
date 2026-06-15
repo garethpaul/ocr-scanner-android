@@ -37,6 +37,7 @@ LOCATION_INDEPENDENT_MAKE_PLAN = "docs/plans/2026-06-13-location-independent-mak
 OCR_LIFECYCLE_PLAN = "docs/plans/2026-06-14-ocr-worker-lifecycle-guard.md"
 LAUNCHER_OCR_PLAN = "docs/plans/2026-06-15-remove-unused-launcher-ocr.md"
 LAUNCHER_PROGRESS_PLAN = "docs/plans/2026-06-15-remove-unused-launcher-progress.md"
+OCR_RESULT_GENERATION_PLAN = "docs/plans/2026-06-15-ocr-result-generation-guard.md"
 REQUIRED = [
     ".github/workflows/check.yml",
     ".gitignore",
@@ -70,6 +71,7 @@ REQUIRED = [
     OCR_LIFECYCLE_PLAN,
     LAUNCHER_OCR_PLAN,
     LAUNCHER_PROGRESS_PLAN,
+    OCR_RESULT_GENERATION_PLAN,
     "docs/legacy-toolchain.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.jar",
@@ -250,14 +252,31 @@ def main():
             )
     if result.count("if (mDestroyed)") < 2:
         failures.append("ResultActivity must guard both worker posting and UI result delivery after destruction")
+    do_ocr = result.split("private void doOCR", 1)[-1].split("public void onWindowFocusChanged", 1)[0]
+    generation_capture_index = do_ocr.find("final int ocrGeneration = ++mOCRGeneration")
+    worker_generation_index = do_ocr.find("if (ocrGeneration != mOCRGeneration)")
+    ui_handoff_index = do_ocr.find("runOnUiThread(new Runnable()")
+    ui_generation_index = do_ocr.find("if (ocrGeneration != mOCRGeneration)", worker_generation_index + 1)
+    result_mutation_index = do_ocr.find("mResult.setText(result)")
+    progress_dismiss_index = do_ocr.find("mProgressDialog.dismiss()")
+    if not (
+        "private volatile int mOCRGeneration;" in result
+        and 0 <= generation_capture_index < worker_generation_index < ui_handoff_index
+        and ui_handoff_index < ui_generation_index < result_mutation_index
+        and ui_generation_index < progress_dismiss_index
+        and do_ocr.count("if (ocrGeneration != mOCRGeneration)") == 2
+    ):
+        failures.append("ResultActivity must reject stale OCR generations before worker handoff and UI mutation")
     destroyed_index = result.find("mDestroyed = true")
+    generation_invalidation_index = result.find("mOCRGeneration++", destroyed_index)
     dialog_index = result.find("mProgressDialog.dismiss()", destroyed_index)
     dialog_clear_index = result.find("mProgressDialog = null", dialog_index)
     teardown_index = result.find("mTessOCR.onDestroy()", destroyed_index)
     super_destroy_index = result.find("super.onDestroy()", destroyed_index)
     if not (
         destroyed_index != -1
-        and dialog_index > destroyed_index
+        and generation_invalidation_index > destroyed_index
+        and dialog_index > generation_invalidation_index
         and dialog_clear_index > dialog_index
         and teardown_index > dialog_clear_index
         and super_destroy_index > teardown_index
@@ -616,6 +635,22 @@ def main():
     ]:
         if evidence not in launcher_progress_verification:
             failures.append(f"launcher progress cleanup verification must record {evidence}")
+
+    result_generation_plan = read(OCR_RESULT_GENERATION_PLAN)
+    result_generation_status = re.findall(r"(?mi)^status:\s*(.+?)\s*$", result_generation_plan)
+    result_generation_verification = markdown_section(
+        result_generation_plan, "Verification Completed"
+    )
+    if (result_generation_status != ["completed"] or
+            "All four Make gates passed" not in result_generation_verification or
+            "Seven isolated hostile mutations were rejected" not in result_generation_verification or
+            "external directory" not in result_generation_verification or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      result_generation_verification)):
+        failures.append("OCR result generation guard plan must record completed verification")
+    for path in ["README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
+        if "ocr result generation guard" not in read(path).lower():
+            failures.append(f"{path} must document the OCR result generation guard")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

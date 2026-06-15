@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- Added an OCR result generation guard so stale image workers cannot replace a
+  newer result or dismiss its progress state.
 - Removed the launcher's unused native OCR wrapper so `ResultActivity` remains
   the sole activity owner of Tesseract recognition resources.
 - Removed unused launcher progress state while preserving `ResultActivity`'s

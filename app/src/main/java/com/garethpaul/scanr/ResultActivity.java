@@ -25,6 +25,7 @@ public class ResultActivity extends Activity implements View.OnClickListener {
     private TessOCR mTessOCR;
     private TextView mResult;
     private volatile boolean mDestroyed;
+    private volatile int mOCRGeneration;
     private static final int REQUEST_TAKE_PHOTO = 1;
     private static final int REQUEST_PICK_PHOTO = 2;
     private static final String TAG = "OCR";
@@ -103,6 +104,7 @@ public class ResultActivity extends Activity implements View.OnClickListener {
         if (mDestroyed || tessOCR == null) {
             return;
         }
+        final int ocrGeneration = ++mOCRGeneration;
 
         if (mProgressDialog == null) {
             mProgressDialog = ProgressDialog.show(this, "Processing",
@@ -119,6 +121,9 @@ public class ResultActivity extends Activity implements View.OnClickListener {
                 if (mDestroyed) {
                     return;
                 }
+                if (ocrGeneration != mOCRGeneration) {
+                    return;
+                }
 
                 runOnUiThread(new Runnable() {
 
@@ -126,6 +131,9 @@ public class ResultActivity extends Activity implements View.OnClickListener {
                     public void run() {
                         // TODO Auto-generated method stub
                         if (mDestroyed) {
+                            return;
+                        }
+                        if (ocrGeneration != mOCRGeneration) {
                             return;
                         }
                         if (result != null && !result.equals("")) {
@@ -208,8 +216,9 @@ public class ResultActivity extends Activity implements View.OnClickListener {
 
     @Override
 	protected void onDestroy() {
-		// TODO Auto-generated method stub
-		mDestroyed = true;
+			// TODO Auto-generated method stub
+			mDestroyed = true;
+        mOCRGeneration++;
         if (mProgressDialog != null) {
             mProgressDialog.dismiss();
             mProgressDialog = null;
