@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-16
+
+- Added a share intent recreation guard so one shared image cannot relaunch
+  duplicate result/OCR work after launcher activity recreation.
+
 ## 2026-06-15
 
 - Added nonblocking OCR teardown so activity destruction does not wait for an

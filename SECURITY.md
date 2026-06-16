@@ -52,6 +52,8 @@ Helpful reports include:
   cannot be opened without exposing raw URI details.
 - Denied shared image access should fail closed with the same user-facing
   message, and URI open/close logs must omit exception payloads.
+- The share intent recreation guard should prevent one shared image launch from
+  creating duplicate result activities and OCR work after recreation.
 - OCR traineddata streams should be closed after asset-copy attempts, and copy
   failures should use generic tagged logging.
 - The OCR worker lifecycle guard should serialize native recognition and

@@ -39,6 +39,7 @@ LAUNCHER_OCR_PLAN = "docs/plans/2026-06-15-remove-unused-launcher-ocr.md"
 LAUNCHER_PROGRESS_PLAN = "docs/plans/2026-06-15-remove-unused-launcher-progress.md"
 OCR_RESULT_GENERATION_PLAN = "docs/plans/2026-06-15-ocr-result-generation-guard.md"
 NONBLOCKING_OCR_TEARDOWN_PLAN = "docs/plans/2026-06-15-nonblocking-ocr-teardown.md"
+SHARE_INTENT_RECREATION_PLAN = "docs/plans/2026-06-16-share-intent-recreation-guard.md"
 REQUIRED = [
     ".github/workflows/check.yml",
     ".gitignore",
@@ -74,6 +75,7 @@ REQUIRED = [
     LAUNCHER_PROGRESS_PLAN,
     OCR_RESULT_GENERATION_PLAN,
     NONBLOCKING_OCR_TEARDOWN_PLAN,
+    SHARE_INTENT_RECREATION_PLAN,
     "docs/legacy-toolchain.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.jar",
@@ -167,6 +169,33 @@ def main():
     ]:
         if phrase not in main:
             failures.append(f"MainActivity shared image handling must include {phrase}")
+    state_key = 'private static final String STATE_HANDLED_SEND_INTENT = "handledSendIntent";'
+    restore_guard = "if (savedInstanceState != null)"
+    restore_value = "mHandledSendIntent = savedInstanceState.getBoolean("
+    on_save = main.split("protected void onSaveInstanceState(Bundle outState)", 1)[-1].split("\n\t}", 1)[0]
+    on_resume = main.split("protected void onResume()", 1)[-1].split("\n\t}", 1)[0]
+    restore_guard_index = main.find(restore_guard)
+    restore_value_index = main.find(restore_value)
+    restore_key_index = main.find("STATE_HANDLED_SEND_INTENT, false", restore_value_index)
+    main_actionbar = main.find("getActionBar()")
+    save_value_index = on_save.find(
+        "outState.putBoolean(STATE_HANDLED_SEND_INTENT, mHandledSendIntent)"
+    )
+    save_super_index = on_save.find("super.onSaveInstanceState(outState)")
+    resume_guard_index = on_resume.find(
+        "if (!mHandledSendIntent && Intent.ACTION_SEND.equals(intent.getAction()))"
+    )
+    handled_index = on_resume.find("mHandledSendIntent = true", resume_guard_index)
+    stream_index = on_resume.find("intent.getParcelableExtra(Intent.EXTRA_STREAM)")
+    launch_index = on_resume.find("startActivity(resultIntent)")
+    if not (
+        main.count(state_key) == 1
+        and main.count("protected void onSaveInstanceState(Bundle outState)") == 1
+        and 0 <= main_super < restore_guard_index < restore_value_index < restore_key_index < main_actionbar
+        and 0 <= save_value_index < save_super_index
+        and 0 <= resume_guard_index < handled_index < stream_index < launch_index
+    ):
+        failures.append("MainActivity must preserve one-shot share handling across recreation")
     for phrase in [
         'new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)',
         'String imageFileName = "JPEG_" + timeStamp',
@@ -396,6 +425,9 @@ def main():
         failures.append("all guidance must keep the result-screen OCR ownership boundary")
     if not all("launcher progress state" in document for document in guidance_documents):
         failures.append("all guidance must document removal of unused launcher progress state")
+    for path in ["README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
+        if "share intent recreation guard" not in read(path).lower():
+            failures.append(f"{path} must document the share intent recreation guard")
 
     toolchain = " ".join(read("docs/legacy-toolchain.md").split())
     for phrase in [
@@ -679,6 +711,21 @@ def main():
     for path in ["README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
         if "nonblocking ocr teardown" not in read(path).lower():
             failures.append(f"{path} must document nonblocking OCR teardown")
+
+    share_recreation_plan = read(SHARE_INTENT_RECREATION_PLAN)
+    share_recreation_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", share_recreation_plan
+    )
+    share_recreation_verification = markdown_section(
+        share_recreation_plan, "Verification Completed"
+    )
+    if (share_recreation_status != ["completed"] or
+            "All four Make gates passed" not in share_recreation_verification or
+            "Eight isolated hostile mutations were rejected" not in share_recreation_verification or
+            "external directory" not in share_recreation_verification or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      share_recreation_verification)):
+        failures.append("share intent recreation guard plan must record completed verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

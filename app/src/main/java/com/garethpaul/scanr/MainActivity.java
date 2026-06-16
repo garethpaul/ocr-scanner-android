@@ -34,6 +34,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	private ImageButton imageButton;
 	private String mCurrentPhotoPath;
 	private boolean mHandledSendIntent;
+	private static final String STATE_HANDLED_SEND_INTENT = "handledSendIntent";
 	private static final int REQUEST_TAKE_PHOTO = 1;
 	private static final int REQUEST_PICK_PHOTO = 2;
     public static final String DATA_PATH = Environment
@@ -44,6 +45,10 @@ public class MainActivity extends Activity implements OnClickListener {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		if (savedInstanceState != null) {
+			mHandledSendIntent = savedInstanceState.getBoolean(
+					STATE_HANDLED_SEND_INTENT, false);
+		}
         ActionBar ab = getActionBar();
         if (ab != null) {
             ab.setDisplayShowTitleEnabled(false);
@@ -101,6 +106,12 @@ public class MainActivity extends Activity implements OnClickListener {
 		setContentView(R.layout.activity_main);
 		imageButton = (ImageButton) findViewById(R.id.imageButton);
 		imageButton.setOnClickListener(this);
+	}
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		outState.putBoolean(STATE_HANDLED_SEND_INTENT, mHandledSendIntent);
+		super.onSaveInstanceState(outState);
 	}
 
 

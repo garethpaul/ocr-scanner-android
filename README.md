@@ -77,6 +77,8 @@ build an APK, start an emulator, or exercise OCR behavior.
   the result screen without exposing raw URI details.
 - Denied shared image access is handled like a missing image instead of
   crashing, and URI open/close logs omit exception payloads.
+- The share intent recreation guard keeps a handled `ACTION_SEND` image from
+  launching duplicate result/OCR work after activity recreation.
 - OCR traineddata streams are closed through a shared cleanup helper after
   asset copies, including failed copies.
 - The OCR worker lifecycle guard serializes native recognition and teardown,
@@ -124,6 +126,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Avoid stack trace dumps around private image URI handling.
 - Shared image intent handling should require an image MIME type and a stream
   URI before OCR processing starts.
+- Preserve the share intent recreation guard so lifecycle changes do not
+  process the same launch intent twice.
 - Keep the share intent filter image-only so Android does not offer the OCR
   activity for text/plain content it cannot process.
 - Shared image stream guards should keep null input streams and failed decodes

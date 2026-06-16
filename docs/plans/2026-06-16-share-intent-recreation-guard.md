@@ -1,6 +1,6 @@
 ---
 title: Share Intent Recreation Guard
-status: planned
+status: completed
 date: 2026-06-16
 ---
 
@@ -61,3 +61,23 @@ field before `onResume`, so the unchanged launch intent is handled again.
 - A recreated launcher activity does not process an already-handled shared
   image intent again.
 - A fresh share launch still forwards one valid image stream exactly once.
+
+## Work Completed
+
+- Restored the handled-share flag from instance state immediately after the
+  framework `onCreate` call.
+- Persisted the current flag before delegating from `onSaveInstanceState`.
+- Extended the static baseline to prove restoration, save ordering, and the
+  existing one-shot `onResume` transition while preserving all OCR behavior.
+
+## Verification Completed
+
+- All four Make gates passed from the repository root and an external directory.
+- Eight isolated hostile mutations were rejected across the state key, restore
+  guard/value, save value/order, handled transition, README, and changelog.
+- Python checker compilation and the focused baseline passed before and after
+  the completed-plan contract was added.
+- Exact diff, Android/NDK/build artifact, credential, conflict marker, binary,
+  large-file, mode, protected-path, and whitespace audits passed.
+- Android SDK, emulator, and device execution remain unavailable on this Linux
+  host; the legacy app still requires manual recreation testing on a device.
