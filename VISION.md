@@ -49,6 +49,7 @@ Priority:
 - Keep the OCR result generation guard around worker handoff and UI mutation
 - Keep nonblocking OCR teardown serialized and off the activity thread
 - Keep the share intent recreation guard on launcher state restoration
+- Keep the camera path recreation guard on in-flight external camera captures
 - Keep native OCR engine ownership in `ResultActivity`, not the launcher
 - Keep launcher progress state absent while preserving result-screen progress ownership
 
@@ -69,6 +70,7 @@ Contribution rules:
 - Do not mix modernization with behavior changes.
 - Preserve shared image intent stream handling when changing OCR entry points.
 - Preserve the share intent recreation guard when changing launcher lifecycle.
+- Preserve the camera path recreation guard when changing camera result state.
 - Preserve image-only share filters when changing manifest intent filters.
 - Preserve shared image stream guards when changing shared-image OCR handling.
 - Preserve the image open failure message when changing URI OCR.

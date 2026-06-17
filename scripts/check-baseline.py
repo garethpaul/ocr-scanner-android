@@ -40,6 +40,7 @@ LAUNCHER_PROGRESS_PLAN = "docs/plans/2026-06-15-remove-unused-launcher-progress.
 OCR_RESULT_GENERATION_PLAN = "docs/plans/2026-06-15-ocr-result-generation-guard.md"
 NONBLOCKING_OCR_TEARDOWN_PLAN = "docs/plans/2026-06-15-nonblocking-ocr-teardown.md"
 SHARE_INTENT_RECREATION_PLAN = "docs/plans/2026-06-16-share-intent-recreation-guard.md"
+CAMERA_PATH_RECREATION_PLAN = "docs/plans/2026-06-17-camera-path-recreation-guard.md"
 REQUIRED = [
     ".github/workflows/check.yml",
     ".gitignore",
@@ -76,6 +77,7 @@ REQUIRED = [
     OCR_RESULT_GENERATION_PLAN,
     NONBLOCKING_OCR_TEARDOWN_PLAN,
     SHARE_INTENT_RECREATION_PLAN,
+    CAMERA_PATH_RECREATION_PLAN,
     "docs/legacy-toolchain.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.jar",
@@ -170,6 +172,7 @@ def main():
         if phrase not in main:
             failures.append(f"MainActivity shared image handling must include {phrase}")
     state_key = 'private static final String STATE_HANDLED_SEND_INTENT = "handledSendIntent";'
+    camera_path_state_key = 'private static final String STATE_CURRENT_PHOTO_PATH = "currentPhotoPath";'
     restore_guard = "if (savedInstanceState != null)"
     restore_value = "mHandledSendIntent = savedInstanceState.getBoolean("
     on_save = main.split("protected void onSaveInstanceState(Bundle outState)", 1)[-1].split("\n\t}", 1)[0]
@@ -177,11 +180,20 @@ def main():
     restore_guard_index = main.find(restore_guard)
     restore_value_index = main.find(restore_value)
     restore_key_index = main.find("STATE_HANDLED_SEND_INTENT, false", restore_value_index)
+    restore_camera_path_index = main.find(
+        "mCurrentPhotoPath = savedInstanceState.getString(", restore_key_index
+    )
+    restore_camera_key_index = main.find(
+        "STATE_CURRENT_PHOTO_PATH", restore_camera_path_index
+    )
     main_actionbar = main.find("getActionBar()")
     save_value_index = on_save.find(
         "outState.putBoolean(STATE_HANDLED_SEND_INTENT, mHandledSendIntent)"
     )
     save_super_index = on_save.find("super.onSaveInstanceState(outState)")
+    save_camera_path_index = on_save.find(
+        "outState.putString(STATE_CURRENT_PHOTO_PATH, mCurrentPhotoPath)"
+    )
     resume_guard_index = on_resume.find(
         "if (!mHandledSendIntent && Intent.ACTION_SEND.equals(intent.getAction()))"
     )
@@ -190,12 +202,47 @@ def main():
     launch_index = on_resume.find("startActivity(resultIntent)")
     if not (
         main.count(state_key) == 1
+        and main.count(camera_path_state_key) == 1
         and main.count("protected void onSaveInstanceState(Bundle outState)") == 1
-        and 0 <= main_super < restore_guard_index < restore_value_index < restore_key_index < main_actionbar
-        and 0 <= save_value_index < save_super_index
+        and 0 <= main_super < restore_guard_index < restore_value_index
+        < restore_key_index < restore_camera_path_index
+        < restore_camera_key_index < main_actionbar
+        and 0 <= save_value_index < save_camera_path_index < save_super_index
         and 0 <= resume_guard_index < handled_index < stream_index < launch_index
     ):
-        failures.append("MainActivity must preserve one-shot share handling across recreation")
+        failures.append("MainActivity must preserve share and camera state across recreation")
+    camera_result = main.split(
+        "protected void onActivityResult(int requestCode, int resultCode, Intent data)", 1
+    )[-1].split("\n    }", 1)[0]
+    camera_success_index = camera_result.find("requestCode == REQUEST_TAKE_PHOTO")
+    camera_path_snapshot_index = camera_result.find(
+        "String photoPath = mCurrentPhotoPath", camera_success_index
+    )
+    camera_path_guard_index = camera_result.find(
+        "if (photoPath != null)", camera_path_snapshot_index
+    )
+    camera_path_forward_index = camera_result.find(
+        'i.putExtra("IMAGE_URI", photoPath)', camera_path_guard_index
+    )
+    camera_path_clear_index = camera_result.find(
+        "mCurrentPhotoPath = null", camera_path_forward_index
+    )
+    camera_result_launch_index = camera_result.find(
+        "startActivity(i)", camera_path_clear_index
+    )
+    camera_path_failure_index = camera_result.find(
+        'Log.e(TAG, "Camera result missing image path")', camera_result_launch_index
+    )
+    if not (
+        0 <= camera_success_index < camera_path_snapshot_index < camera_path_guard_index
+        < camera_path_forward_index < camera_path_clear_index < camera_result_launch_index
+        < camera_path_failure_index
+        and 'i.putExtra("IMAGE_URI",mCurrentPhotoPath)' not in main
+        and 'i.putExtra("IMAGE_URI", mCurrentPhotoPath)' not in main
+    ):
+        failures.append(
+            "MainActivity must forward only a restored or live camera path and consume it once"
+        )
     for phrase in [
         'new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)',
         'String imageFileName = "JPEG_" + timeStamp',
@@ -428,6 +475,8 @@ def main():
     for path in ["README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]:
         if "share intent recreation guard" not in read(path).lower():
             failures.append(f"{path} must document the share intent recreation guard")
+        if "camera path recreation guard" not in read(path).lower():
+            failures.append(f"{path} must document the camera path recreation guard")
 
     toolchain = " ".join(read("docs/legacy-toolchain.md").split())
     for phrase in [
@@ -726,6 +775,23 @@ def main():
             re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
                       share_recreation_verification)):
         failures.append("share intent recreation guard plan must record completed verification")
+
+    camera_path_plan = read(CAMERA_PATH_RECREATION_PLAN)
+    camera_path_status = re.findall(
+        r"(?mi)^status:\s*(.+?)\s*$", camera_path_plan
+    )
+    camera_path_work = markdown_section(camera_path_plan, "Work Completed")
+    camera_path_verification = markdown_section(
+        camera_path_plan, "Verification Completed"
+    )
+    if (camera_path_status != ["completed"] or
+            not camera_path_work or
+            "all four Make gates passed" not in camera_path_verification or
+            "Twelve isolated hostile mutations were rejected" not in camera_path_verification or
+            "external directory" not in camera_path_verification or
+            re.search(r"(?i)\b(?:pending|todo|tbd|not run|to be recorded)\b",
+                      camera_path_verification)):
+        failures.append("camera path recreation guard plan must record completed verification")
 
     try:
         ET.parse(ROOT / "docs/readme-overview.svg")

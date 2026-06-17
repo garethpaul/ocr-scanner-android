@@ -79,6 +79,8 @@ build an APK, start an emulator, or exercise OCR behavior.
   crashing, and URI open/close logs omit exception payloads.
 - The share intent recreation guard keeps a handled `ACTION_SEND` image from
   launching duplicate result/OCR work after activity recreation.
+- The camera path recreation guard restores an in-flight capture path after
+  launcher recreation and refuses to open a result when that state is missing.
 - OCR traineddata streams are closed through a shared cleanup helper after
   asset copies, including failed copies.
 - The OCR worker lifecycle guard serializes native recognition and teardown,
@@ -128,6 +130,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   URI before OCR processing starts.
 - Preserve the share intent recreation guard so lifecycle changes do not
   process the same launch intent twice.
+- Preserve the camera path recreation guard so successful external camera
+  results retain their allocated output path across launcher recreation.
 - Keep the share intent filter image-only so Android does not offer the OCR
   activity for text/plain content it cannot process.
 - Shared image stream guards should keep null input streams and failed decodes

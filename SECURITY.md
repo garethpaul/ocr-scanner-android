@@ -54,6 +54,8 @@ Helpful reports include:
   message, and URI open/close logs must omit exception payloads.
 - The share intent recreation guard should prevent one shared image launch from
   creating duplicate result activities and OCR work after recreation.
+- The camera path recreation guard should restore only the app-allocated pending
+  capture path and fail closed when a successful result has no retained path.
 - OCR traineddata streams should be closed after asset-copy attempts, and copy
   failures should use generic tagged logging.
 - The OCR worker lifecycle guard should serialize native recognition and

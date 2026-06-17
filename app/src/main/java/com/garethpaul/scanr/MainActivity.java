@@ -35,6 +35,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	private String mCurrentPhotoPath;
 	private boolean mHandledSendIntent;
 	private static final String STATE_HANDLED_SEND_INTENT = "handledSendIntent";
+	private static final String STATE_CURRENT_PHOTO_PATH = "currentPhotoPath";
 	private static final int REQUEST_TAKE_PHOTO = 1;
 	private static final int REQUEST_PICK_PHOTO = 2;
     public static final String DATA_PATH = Environment
@@ -48,6 +49,8 @@ public class MainActivity extends Activity implements OnClickListener {
 		if (savedInstanceState != null) {
 			mHandledSendIntent = savedInstanceState.getBoolean(
 					STATE_HANDLED_SEND_INTENT, false);
+			mCurrentPhotoPath = savedInstanceState.getString(
+					STATE_CURRENT_PHOTO_PATH);
 		}
         ActionBar ab = getActionBar();
         if (ab != null) {
@@ -111,6 +114,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		outState.putBoolean(STATE_HANDLED_SEND_INTENT, mHandledSendIntent);
+		outState.putString(STATE_CURRENT_PHOTO_PATH, mCurrentPhotoPath);
 		super.onSaveInstanceState(outState);
 	}
 
@@ -199,9 +203,15 @@ public class MainActivity extends Activity implements OnClickListener {
 		// TODO Auto-generated method stub
 		if (requestCode == REQUEST_TAKE_PHOTO
 				&& resultCode == Activity.RESULT_OK) {
-            Intent i = new Intent(getApplicationContext(), ResultActivity.class);
-            i.putExtra("IMAGE_URI",mCurrentPhotoPath);
-            startActivity(i);
+            String photoPath = mCurrentPhotoPath;
+            if (photoPath != null) {
+                Intent i = new Intent(getApplicationContext(), ResultActivity.class);
+                i.putExtra("IMAGE_URI", photoPath);
+                mCurrentPhotoPath = null;
+                startActivity(i);
+            } else {
+                Log.e(TAG, "Camera result missing image path");
+            }
             //setPic();
 		}
     }

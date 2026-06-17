@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-17
+
+- Added a camera path recreation guard so an in-flight external capture retains
+  its allocated output path and missing state fails closed.
+
 ## 2026-06-16
 
 - Added a share intent recreation guard so one shared image cannot relaunch
