@@ -1,5 +1,58 @@
 # Changes
 
+## 2026-06-19
+
+- Cleaned canceled, failed, and consumed camera capture files instead of
+  leaving private temporary images on external storage.
+- Handled fresh top-of-stack share intents exactly once and forwarded their
+  read grant into the result flow.
+- Serialized OCR work and native teardown on one host-tested executor, with a
+  preflight that skips queued work after its generation becomes stale.
+- Staged traineddata copies through a temporary file so failed copies cannot
+  suppress future installation retries.
+- Added host Java and hostile mutation tests, CODEOWNERS, and repository agent
+  guidance while preserving the credential-free hosted workflow.
+
+## 2026-06-17
+
+- Added a camera path recreation guard so an in-flight external capture retains
+  its allocated output path and missing state fails closed.
+
+## 2026-06-16
+
+- Added a share intent recreation guard so one shared image cannot relaunch
+  duplicate result/OCR work after launcher activity recreation.
+
+## 2026-06-15
+
+- Added nonblocking OCR teardown so activity destruction does not wait for an
+  in-flight synchronized native recognition call.
+- Added an OCR result generation guard so stale image workers cannot replace a
+  newer result or dismiss its progress state.
+- Removed the launcher's unused native OCR wrapper so `ResultActivity` remains
+  the sole activity owner of Tesseract recognition resources.
+- Removed unused launcher progress state while preserving `ResultActivity`'s
+  active OCR progress display and teardown.
+
+## 2026-06-14
+
+- Serialized native OCR execution and teardown, blocked worker/UI delivery
+  after activity destruction, and cleared the progress dialog during teardown.
+
+## 2026-06-13
+
+- Made every SDK-free Make alias resolve the static checker from the checkout
+  when the Makefile is invoked by absolute path.
+- Documented the exact declared Gradle, Android SDK, support-library, and native
+  build assumptions while marking JDK/NDK versions and rebuild status unverified.
+
+## 2026-06-12
+
+- Disabled checkout credential persistence in the pinned, read-only hosted
+  validation job and added structural checks for that boundary.
+- Handled denied shared-image URI access without crashing and removed exception
+  payloads from URI open and stream-close logs.
+
 ## 2026-06-10
 
 - Added pinned, read-only hosted Linux validation for the SDK-free baseline.

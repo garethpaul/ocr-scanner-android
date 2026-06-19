@@ -23,7 +23,10 @@ public class ResultActivity extends Activity implements View.OnClickListener {
     private ProgressDialog mProgressDialog;
     private ImageView mImage;
     private TessOCR mTessOCR;
+    private final OCRTaskRunner mOCRTasks = new OCRTaskRunner();
     private TextView mResult;
+    private volatile boolean mDestroyed;
+    private volatile int mOCRGeneration;
     private static final int REQUEST_TAKE_PHOTO = 1;
     private static final int REQUEST_PICK_PHOTO = 2;
     private static final String TAG = "OCR";
@@ -75,14 +78,17 @@ public class ResultActivity extends Activity implements View.OnClickListener {
                 mImage.setImageBitmap(bitmap);
                 doOCR(bitmap);
             } catch (FileNotFoundException e) {
-                Log.e(TAG, "Unable to open image URI", e);
+                Log.e(TAG, "Unable to open image URI");
+                mResult.setText("Unable to open image.");
+            } catch (SecurityException e) {
+                Log.e(TAG, "Image URI access denied");
                 mResult.setText("Unable to open image.");
             } finally {
                 if (is != null) {
                     try {
                         is.close();
                     } catch (IOException e) {
-                        Log.e(TAG, "Unable to close image URI stream", e);
+                        Log.e(TAG, "Unable to close image URI stream");
                     }
                 }
             }
@@ -95,6 +101,12 @@ public class ResultActivity extends Activity implements View.OnClickListener {
             return;
         }
 
+        final TessOCR tessOCR = mTessOCR;
+        if (mDestroyed || tessOCR == null) {
+            return;
+        }
+        final int ocrGeneration = ++mOCRGeneration;
+
         if (mProgressDialog == null) {
             mProgressDialog = ProgressDialog.show(this, "Processing",
                     "Doing OCR...", true);
@@ -103,29 +115,44 @@ public class ResultActivity extends Activity implements View.OnClickListener {
             mProgressDialog.show();
         }
 
-        new Thread(new Runnable() {
+        mOCRTasks.execute(new Runnable() {
             public void run() {
-
-                final String result = mTessOCR.getOCRResult(bitmap);
+                if (mDestroyed || ocrGeneration != mOCRGeneration) {
+                    return;
+                }
+                final String result = tessOCR.getOCRResult(bitmap);
+                if (mDestroyed) {
+                    return;
+                }
+                if (ocrGeneration != mOCRGeneration) {
+                    return;
+                }
 
                 runOnUiThread(new Runnable() {
 
                     @Override
                     public void run() {
                         // TODO Auto-generated method stub
+                        if (mDestroyed) {
+                            return;
+                        }
+                        if (ocrGeneration != mOCRGeneration) {
+                            return;
+                        }
                         if (result != null && !result.equals("")) {
                             mResult.setText(result);
                         }
 
                         if (mProgressDialog != null) {
                             mProgressDialog.dismiss();
+                            mProgressDialog = null;
                         }
                     }
 
                 });
 
             };
-        }).start();
+        });
     }
 
 
@@ -138,6 +165,9 @@ public class ResultActivity extends Activity implements View.OnClickListener {
     }
 
     private void setPic() {
+        String photoPath = mCurrentPhotoPath;
+        mCurrentPhotoPath = null;
+        try {
         // Get the dimensions of the View
         int targetW = 500;
         int targetH = 500;
@@ -145,7 +175,7 @@ public class ResultActivity extends Activity implements View.OnClickListener {
         // Get the dimensions of the bitmap
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+        BitmapFactory.decodeFile(photoPath, bmOptions);
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
         // Determine how much to scale down the image
@@ -156,14 +186,18 @@ public class ResultActivity extends Activity implements View.OnClickListener {
         bmOptions.inSampleSize = Math.max(1, scaleFactor << 1);
         bmOptions.inPurgeable = true;
 
-        Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+        Bitmap bitmap = BitmapFactory.decodeFile(photoPath, bmOptions);
         if (bitmap == null) {
             mResult.setText("Unable to decode image.");
             return;
         }
         mImage.setImageBitmap(bitmap);
         doOCR(bitmap);
-
+        } finally {
+            if (!CaptureFile.delete(photoPath)) {
+                Log.e(TAG, "Unable to delete camera image");
+            }
+        }
     }
 
 
@@ -192,11 +226,28 @@ public class ResultActivity extends Activity implements View.OnClickListener {
 
     @Override
 	protected void onDestroy() {
-		// TODO Auto-generated method stub
-		super.onDestroy();
-        if (mTessOCR != null) {
-            mTessOCR.onDestroy();
+			// TODO Auto-generated method stub
+			mDestroyed = true;
+        mOCRGeneration++;
+        if (mProgressDialog != null) {
+            mProgressDialog.dismiss();
+            mProgressDialog = null;
         }
+        final TessOCR tessOCR = mTessOCR;
+        mTessOCR = null;
+        if (tessOCR != null) {
+			mOCRTasks.close(new Runnable() {
+				public void run() {
+					tessOCR.onDestroy();
+				}
+			});
+		} else {
+			mOCRTasks.close(new Runnable() {
+				public void run() {
+				}
+			});
+		}
+		super.onDestroy();
 	}
 
     @Override

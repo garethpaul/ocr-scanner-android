@@ -34,6 +34,10 @@ Additional scan context:
 ### Prerequisites
 
 - Git
+- The repository's verification commands require Python 3 only.
+- An Android rebuild would require the historical toolchain described in
+  [`docs/legacy-toolchain.md`](docs/legacy-toolchain.md); exact JDK and NDK
+  versions are not declared or verified.
 - Android Studio or a compatible Android SDK
 - Gradle or the checked-in Gradle wrapper when present
 
@@ -49,6 +53,9 @@ make check
 ```
 
 The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
+
+These Make targets are static checks. They do not run Gradle, compile JNI code,
+build an APK, start an emulator, or exercise OCR behavior.
 
 ## Running or Using the Project
 
@@ -68,8 +75,30 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   stream cannot be opened or decoded.
 - The image open failure message keeps unreadable shared image URIs visible in
   the result screen without exposing raw URI details.
+- Denied shared image access is handled like a missing image instead of
+  crashing, and URI open/close logs omit exception payloads.
+- The share intent recreation guard keeps a handled `ACTION_SEND` image from
+  launching duplicate result/OCR work after activity recreation.
+- The camera path recreation guard restores an in-flight capture path after
+  launcher recreation and refuses to open a result when that state is missing.
 - OCR traineddata streams are closed through a shared cleanup helper after
   asset copies, including failed copies.
+- The OCR worker lifecycle guard serializes native recognition and teardown,
+  blocks destroyed-activity UI delivery, and clears the progress dialog.
+- The OCR result generation guard allows only the newest image worker to update
+  result text or dismiss active progress state.
+- Nonblocking OCR teardown detaches the native wrapper during activity
+  destruction and waits for serialized engine shutdown off the UI thread.
+- Native OCR engine ownership stays in `ResultActivity`; the launcher does not
+  initialize an unused second Tesseract engine.
+- Launcher progress state is absent from `MainActivity`; active OCR progress
+  display and teardown remain owned by `ResultActivity`.
+- Fresh `ACTION_SEND` deliveries received through `onNewIntent` are handled
+  once, and read grants are forwarded without logging private URI details.
+- Camera output files are deleted after consumption, cancellation, or failed
+  handoff; failed traineddata copies remain temporary and retryable.
+- OCR work and native cleanup share one ordered executor, and queued stale
+  generations are rejected before entering the native engine.
 
 ## Testing and Verification
 
@@ -77,11 +106,19 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make test`
 - `make build`
 - `make check`
+- The Make gates are location-independent. From another directory, pass the
+  checkout's Makefile by absolute path, such as
+  `make -f /path/to/ocr-scanner-android/Makefile check`.
 - `python3 scripts/check-baseline.py`
+- `scripts/run-host-tests.sh`
+- `python3 scripts/test-baseline-mutations.py`
 - `./gradlew test` or Android Studio's test runner when the SDK is configured
-- Pinned hosted Linux validation runs the SDK-free baseline on Python 3.12.
+- Pinned hosted Linux validation uses a read-only, credential-free checkout and
+  runs the SDK-free baseline on Python 3.12.
 - The baseline verifies the checked-in Gradle wrapper JAR against SHA-256
   `e2b82129ab64751fd40437007bd2f7f2afb3c6e41a9198e628650b22d5824a14`.
+- That JAR does not match Gradle's published 1.6 or 2.2.1 release wrapper
+  checksums, so it is not executed without additional provenance evidence.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -101,12 +138,18 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Avoid stack trace dumps around private image URI handling.
 - Shared image intent handling should require an image MIME type and a stream
   URI before OCR processing starts.
+- Preserve the share intent recreation guard so lifecycle changes do not
+  process the same launch intent twice.
+- Preserve the camera path recreation guard so successful external camera
+  results retain their allocated output path across launcher recreation.
 - Keep the share intent filter image-only so Android does not offer the OCR
   activity for text/plain content it cannot process.
 - Shared image stream guards should keep null input streams and failed decodes
   from reaching OCR.
 - The image open failure message should remain user-facing when a shared image
   URI cannot be opened.
+- Keep denied shared image access user-safe and keep provider, path, and
+  exception details out of URI failure logs.
 - OCR traineddata streams should be closed after asset-copy attempts, and copy
   failures should use generic tagged logging.
 - Generated NDK outputs under `obj/` are intentionally ignored and should not
@@ -116,6 +159,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   under `jni/`, and no active submodule contract is declared.
 - Treat the Gradle wrapper JAR as executable build tooling. Review provenance
   before updating its pinned checksum.
+- Keep declared Gradle 2.2.1, Android plugin 1.1.0, SDK/build-tools levels, and
+  GNU STL/ABI assumptions separate from claims of a successful modern rebuild.
 - Review changes touching authentication or token handling; examples from the scan include jni/com_googlecode_tesseract_android/glibc/glob.c.
 - Review changes touching network requests, sockets, or service endpoints; examples from the scan include app/src/main/AndroidManifest.xml, app/src/main/java/com/garethpaul/scanr/MainActivity.java, app/src/main/res/layout/activity_main.xml, app/src/main/res/layout/activity_result.xml, and 6 more.
 - Review changes touching mobile permissions or privacy-sensitive device data; examples from the scan include app/src/main/AndroidManifest.xml, app/src/main/java/com/garethpaul/scanr/MainActivity.java, gradlew, jni/com_googlecode_leptonica_android/box.cpp, and 6 more.
@@ -126,6 +171,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - This looks like a legacy Android project or sample. Expect Android SDK, Gradle, and support-library versions to matter.
 - Run `make lint`, `make test`, `make build`, and `make check` before changing
   manifest permissions, OCR setup, image decode paths, or Gradle metadata.
+- Use an absolute Makefile path when running those SDK-free gates outside the
+  checkout.
 - See `docs/plans/2026-06-09-make-gate-aliases.md` for the local verification
   gate aliases.
 - See `docs/plans/2026-06-10-image-open-failure-message.md` for the image open

@@ -50,8 +50,29 @@ Helpful reports include:
   cannot be opened or decoded.
 - The image open failure message should tell users when a shared image URI
   cannot be opened without exposing raw URI details.
+- Denied shared image access should fail closed with the same user-facing
+  message, and URI open/close logs must omit exception payloads.
+- The share intent recreation guard should prevent one shared image launch from
+  creating duplicate result activities and OCR work after recreation.
+- The camera path recreation guard should restore only the app-allocated pending
+  capture path and fail closed when a successful result has no retained path.
 - OCR traineddata streams should be closed after asset-copy attempts, and copy
   failures should use generic tagged logging.
+- The OCR worker lifecycle guard should serialize native recognition and
+  teardown and prevent results from reaching a destroyed activity.
+- Camera capture files must be deleted after cancellation, failed handoff, or
+  successful decode, and incomplete traineddata must never occupy the final
+  installed path.
+- Fresh share intents must retain only the read grant needed for the explicit
+  result activity and must remain idempotent across recreation.
+- The OCR result generation guard should reject stale image completions before
+  result or progress UI mutation.
+- Nonblocking OCR teardown should preserve serialized native shutdown without
+  waiting behind active recognition on the activity thread.
+- Keep native OCR engine ownership in `ResultActivity`; `MainActivity` should
+  not retain an unused second Tesseract engine.
+- Keep launcher progress state out of `MainActivity`; only `ResultActivity`
+  should own the active OCR progress dialog lifecycle.
 - Generated NDK objects, APKs, local SDK paths, and signing material are local
   build outputs and must not be committed.
 - Do not add executable gitlinks without reviewed `.gitmodules` metadata and a
@@ -66,7 +87,11 @@ If this project requests device permissions such as location, camera, microphone
 - The checked-in Gradle wrapper JAR is pinned by SHA-256 in the static baseline.
   Treat checksum changes as executable build-tool updates requiring provenance
   review.
-- Pinned, read-only hosted Linux validation runs the same baseline used locally.
+- The declared Gradle, Android plugin, SDK, support-library, JCenter, GNU STL,
+  and ABI metadata is historical. Do not source obsolete JDK, SDK, NDK, wrapper,
+  or binary components from untrusted mirrors to reproduce the build.
+- Pinned, read-only hosted Linux validation uses a credential-free checkout and
+  runs the same baseline used locally without persisting repository credentials.
 
 Dependency updates should come from trusted package managers and should keep lockfiles in sync when lockfiles exist. Do not commit credentials, private keys, tokens, generated secrets, or machine-local configuration. If a vulnerability depends on a compromised package, typosquatting risk, insecure transitive dependency, or unsafe build step, include the package name, affected version, and the path through which it is used.
 

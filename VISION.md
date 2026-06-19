@@ -37,15 +37,28 @@ Priority:
 - Keep share intent filters image-only for OCR entry points
 - Keep shared image stream guards before OCR processing
 - Keep the image open failure message visible for unreadable shared image URIs
+- Keep denied shared image access from crashing or leaking URI exception details
 - Keep OCR traineddata streams closed after asset-copy attempts
 - Keep `make lint`, `make test`, `make build`, and `make check` on the
   SDK-free static baseline
 - Keep the Gradle wrapper JAR checksum explicit and reviewed
-- Keep the SDK-free baseline running in pinned, read-only hosted Linux CI
+- Keep the SDK-free baseline running in pinned, read-only, credential-free
+  hosted Linux CI
+- Keep exact declared toolchain metadata separate from unverified rebuild claims
+- Keep the OCR worker lifecycle guard around native teardown and UI delivery
+- Keep private camera files short-lived and traineddata installation atomic
+- Keep fresh shared-image delivery idempotent across recreation and new intents
+- Keep the OCR result generation guard around worker handoff and UI mutation
+- Keep nonblocking OCR teardown serialized and off the activity thread
+- Keep the share intent recreation guard on launcher state restoration
+- Keep the camera path recreation guard on in-flight external camera captures
+- Keep native OCR engine ownership in `ResultActivity`, not the launcher
+- Keep launcher progress state absent while preserving result-screen progress ownership
 
 Next priorities:
 
-- Add setup notes for the required Android and NDK toolchain
+- Identify independently verifiable JDK and NDK versions for the historical
+  build, if available
 - Document where trained OCR data should live and how it is licensed
 - Add explicit cleanup guidance for timestamped capture files
 - Add a small fixture-based smoke test for OCR initialization
@@ -58,9 +71,12 @@ Contribution rules:
 - Keep native dependency licenses visible.
 - Do not mix modernization with behavior changes.
 - Preserve shared image intent stream handling when changing OCR entry points.
+- Preserve the share intent recreation guard when changing launcher lifecycle.
+- Preserve the camera path recreation guard when changing camera result state.
 - Preserve image-only share filters when changing manifest intent filters.
 - Preserve shared image stream guards when changing shared-image OCR handling.
 - Preserve the image open failure message when changing URI OCR.
+- Preserve denied shared image access handling and sanitized URI failure logs.
 - Preserve traineddata stream cleanup when changing OCR asset setup.
 - Preserve collision-resistant camera file creation when changing capture flow.
 - Preserve the no-orphaned-gitlinks repository baseline.
