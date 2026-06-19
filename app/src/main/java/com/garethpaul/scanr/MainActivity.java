@@ -74,37 +74,45 @@ public class MainActivity extends Activity implements OnClickListener {
 
         }
 
-        // You can get them at:
-        // http://code.google.com/p/tesseract-ocr/downloads/list
-        // This area needs work and optimization
-        if (!(new File(DATA_PATH + "tessdata/" + lang + ".traineddata")).exists()) {
-            InputStream in = null;
-            OutputStream out = null;
-            try {
+		// You can get them at:
+		// http://code.google.com/p/tesseract-ocr/downloads/list
+		// This area needs work and optimization
+		File trainedDataFile = new File(DATA_PATH + "tessdata/" + lang + ".traineddata");
+		if (!trainedDataFile.exists()) {
+			File trainedDataTemp = new File(trainedDataFile.getAbsolutePath() + ".tmp");
+			InputStream in = null;
+			OutputStream out = null;
+			boolean installed = false;
+			try {
+				CaptureFile.delete(trainedDataTemp.getAbsolutePath());
+				AssetManager assetManager = getAssets();
+				in = assetManager.open("tessdata/" + lang + ".traineddata");
+				out = new FileOutputStream(trainedDataTemp);
 
-                AssetManager assetManager = getAssets();
-                in = assetManager.open("tessdata/" + lang + ".traineddata");
-                //GZIPInputStream gin = new GZIPInputStream(in);
-                out = new FileOutputStream(DATA_PATH
-                        + "tessdata/" + lang + ".traineddata");
-
-                // Transfer bytes from in to out
-                byte[] buf = new byte[1024];
-                int len;
-                //while ((lenf = gin.read(buff)) > 0) {
-                while ((len = in.read(buf)) > 0) {
-                    out.write(buf, 0, len);
-                }
-                //gin.close();
-
-                Log.v(TAG, "Copied " + lang + " traineddata");
-            } catch (IOException e) {
-                Log.e(TAG, "Was unable to copy " + lang + " traineddata");
-            } finally {
-                closeQuietly(out, "Unable to close OCR traineddata output");
-                closeQuietly(in, "Unable to close OCR traineddata asset");
-            }
-        }
+				byte[] buf = new byte[1024];
+				int len;
+				while ((len = in.read(buf)) > 0) {
+					out.write(buf, 0, len);
+				}
+				out.close();
+				out = null;
+				in.close();
+				in = null;
+				if (!trainedDataTemp.renameTo(trainedDataFile)) {
+					throw new IOException("Unable to install OCR traineddata");
+				}
+				installed = true;
+				Log.v(TAG, "Copied " + lang + " traineddata");
+			} catch (IOException e) {
+				Log.e(TAG, "Was unable to copy " + lang + " traineddata");
+			} finally {
+				closeQuietly(out, "Unable to close OCR traineddata output");
+				closeQuietly(in, "Unable to close OCR traineddata asset");
+				if (!installed) {
+					CaptureFile.delete(trainedDataTemp.getAbsolutePath());
+				}
+			}
+		}
 
 		setContentView(R.layout.activity_main);
 		imageButton = (ImageButton) findViewById(R.id.imageButton);
@@ -122,10 +130,19 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	@Override
 	protected void onResume() {
-		// TODO Auto-generated method stub
 		super.onResume();
+		handleSendIntent(getIntent());
+	}
 
-		Intent intent = getIntent();
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+		setIntent(intent);
+		mHandledSendIntent = false;
+		handleSendIntent(intent);
+	}
+
+	private void handleSendIntent(Intent intent) {
 		if (!mHandledSendIntent && Intent.ACTION_SEND.equals(intent.getAction())) {
 			mHandledSendIntent = true;
 			Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
@@ -134,7 +151,13 @@ public class MainActivity extends Activity implements OnClickListener {
 				Intent resultIntent = new Intent(this, ResultActivity.class);
 				resultIntent.setType(type);
 				resultIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
-				startActivity(resultIntent);
+				resultIntent.addFlags(intent.getFlags()
+						& Intent.FLAG_GRANT_READ_URI_PERMISSION);
+				try {
+					startActivity(resultIntent);
+				} catch (RuntimeException error) {
+					Log.e(TAG, "Unable to open shared image");
+				}
 			} else {
 				Log.e(TAG, "ACTION_SEND missing image stream");
 			}
@@ -169,11 +192,18 @@ public class MainActivity extends Activity implements OnClickListener {
 				Log.e(TAG, "Unable to create camera image");
 			}
 			// Continue only if the File was successfully created
-			if (photoFile != null) {
-				takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
-						Uri.fromFile(photoFile));
-				startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
-			}
+				if (photoFile != null) {
+					takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
+							Uri.fromFile(photoFile));
+					try {
+						startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+					} catch (RuntimeException error) {
+						String photoPath = mCurrentPhotoPath;
+						mCurrentPhotoPath = null;
+						deleteCapture(photoPath);
+						Log.e(TAG, "Unable to launch camera");
+					}
+				}
 		}
 	}
 
@@ -200,21 +230,35 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		// TODO Auto-generated method stub
-		if (requestCode == REQUEST_TAKE_PHOTO
-				&& resultCode == Activity.RESULT_OK) {
-            String photoPath = mCurrentPhotoPath;
-            if (photoPath != null) {
-                Intent i = new Intent(getApplicationContext(), ResultActivity.class);
-                i.putExtra("IMAGE_URI", photoPath);
-                mCurrentPhotoPath = null;
-                startActivity(i);
-            } else {
-                Log.e(TAG, "Camera result missing image path");
-            }
-            //setPic();
+		if (requestCode == REQUEST_TAKE_PHOTO) {
+			String photoPath = mCurrentPhotoPath;
+			mCurrentPhotoPath = null;
+			if (resultCode == Activity.RESULT_OK) {
+				if (photoPath != null) {
+					Intent i = new Intent(getApplicationContext(), ResultActivity.class);
+					i.putExtra("IMAGE_URI", photoPath);
+					try {
+						startActivity(i);
+					} catch (RuntimeException error) {
+						deleteCapture(photoPath);
+						Log.e(TAG, "Unable to open captured image");
+					}
+				} else {
+					Log.e(TAG, "Camera result missing image path");
+				}
+			} else {
+				deleteCapture(photoPath);
+			}
+			return;
 		}
-    }
+		super.onActivityResult(requestCode, resultCode, data);
+	}
+
+	private void deleteCapture(String photoPath) {
+		if (photoPath != null && !CaptureFile.delete(photoPath)) {
+			Log.e(TAG, "Unable to delete camera image");
+		}
+	}
 
 	@Override
 	public void onClick(View v) {

@@ -1,5 +1,18 @@
 # Changes
 
+## 2026-06-19
+
+- Cleaned canceled, failed, and consumed camera capture files instead of
+  leaving private temporary images on external storage.
+- Handled fresh top-of-stack share intents exactly once and forwarded their
+  read grant into the result flow.
+- Serialized OCR work and native teardown on one host-tested executor, with a
+  preflight that skips queued work after its generation becomes stale.
+- Staged traineddata copies through a temporary file so failed copies cannot
+  suppress future installation retries.
+- Added host Java and hostile mutation tests, CODEOWNERS, and repository agent
+  guidance while preserving the credential-free hosted workflow.
+
 ## 2026-06-17
 
 - Added a camera path recreation guard so an in-flight external capture retains

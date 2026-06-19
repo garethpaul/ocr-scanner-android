@@ -46,6 +46,8 @@ Priority:
   hosted Linux CI
 - Keep exact declared toolchain metadata separate from unverified rebuild claims
 - Keep the OCR worker lifecycle guard around native teardown and UI delivery
+- Keep private camera files short-lived and traineddata installation atomic
+- Keep fresh shared-image delivery idempotent across recreation and new intents
 - Keep the OCR result generation guard around worker handoff and UI mutation
 - Keep nonblocking OCR teardown serialized and off the activity thread
 - Keep the share intent recreation guard on launcher state restoration

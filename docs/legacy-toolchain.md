@@ -20,6 +20,18 @@ These are declarations in tracked files, not proof that the historical
 artifacts still resolve or build on a current workstation. The repository does
 not pin an exact JDK version.
 
+The checked wrapper JAR has SHA-256
+`e2b82129ab64751fd40437007bd2f7f2afb3c6e41a9198e628650b22d5824a14` and an
+embedded Gradle 1.6 development timestamp from April 4, 2013. Its bytes do not
+match the wrapper JAR in Gradle's official `v1.6` source tag
+(`45b9815ae556ac12a4fefecefc724637232caf38adaacc0dd66f8db6ad37225e`) or
+Gradle's published 2.2.1 wrapper checksum
+(`5f73d431fd1c5dcc2cf11555b8e486c43249c1099f678ccc6088b05be600a2e1`).
+The declared 2.2.1 all-distribution checksum is
+`1d7c28b3731906fd1b2955946c1d052303881585fc14baedd675e4cf2bc1ecab`.
+Because the historical wrapper's exact provenance remains unverified, this
+review did not execute it.
+
 ## Declared Native Build
 
 `jni/Application.mk` requests `gnustl_static` and the `armeabi`, `armeabi-v7a`,

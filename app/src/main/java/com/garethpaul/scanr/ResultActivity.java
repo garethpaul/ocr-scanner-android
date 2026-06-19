@@ -23,6 +23,7 @@ public class ResultActivity extends Activity implements View.OnClickListener {
     private ProgressDialog mProgressDialog;
     private ImageView mImage;
     private TessOCR mTessOCR;
+    private final OCRTaskRunner mOCRTasks = new OCRTaskRunner();
     private TextView mResult;
     private volatile boolean mDestroyed;
     private volatile int mOCRGeneration;
@@ -114,9 +115,11 @@ public class ResultActivity extends Activity implements View.OnClickListener {
             mProgressDialog.show();
         }
 
-        new Thread(new Runnable() {
+        mOCRTasks.execute(new Runnable() {
             public void run() {
-
+                if (mDestroyed || ocrGeneration != mOCRGeneration) {
+                    return;
+                }
                 final String result = tessOCR.getOCRResult(bitmap);
                 if (mDestroyed) {
                     return;
@@ -149,7 +152,7 @@ public class ResultActivity extends Activity implements View.OnClickListener {
                 });
 
             };
-        }).start();
+        });
     }
 
 
@@ -162,6 +165,9 @@ public class ResultActivity extends Activity implements View.OnClickListener {
     }
 
     private void setPic() {
+        String photoPath = mCurrentPhotoPath;
+        mCurrentPhotoPath = null;
+        try {
         // Get the dimensions of the View
         int targetW = 500;
         int targetH = 500;
@@ -169,7 +175,7 @@ public class ResultActivity extends Activity implements View.OnClickListener {
         // Get the dimensions of the bitmap
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+        BitmapFactory.decodeFile(photoPath, bmOptions);
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
         // Determine how much to scale down the image
@@ -180,14 +186,18 @@ public class ResultActivity extends Activity implements View.OnClickListener {
         bmOptions.inSampleSize = Math.max(1, scaleFactor << 1);
         bmOptions.inPurgeable = true;
 
-        Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+        Bitmap bitmap = BitmapFactory.decodeFile(photoPath, bmOptions);
         if (bitmap == null) {
             mResult.setText("Unable to decode image.");
             return;
         }
         mImage.setImageBitmap(bitmap);
         doOCR(bitmap);
-
+        } finally {
+            if (!CaptureFile.delete(photoPath)) {
+                Log.e(TAG, "Unable to delete camera image");
+            }
+        }
     }
 
 
@@ -226,12 +236,17 @@ public class ResultActivity extends Activity implements View.OnClickListener {
         final TessOCR tessOCR = mTessOCR;
         mTessOCR = null;
         if (tessOCR != null) {
-            new Thread(new Runnable() {
-                public void run() {
-                    tessOCR.onDestroy();
-                }
-            }, "ocr-teardown").start();
-        }
+			mOCRTasks.close(new Runnable() {
+				public void run() {
+					tessOCR.onDestroy();
+				}
+			});
+		} else {
+			mOCRTasks.close(new Runnable() {
+				public void run() {
+				}
+			});
+		}
 		super.onDestroy();
 	}
 

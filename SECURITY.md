@@ -60,6 +60,11 @@ Helpful reports include:
   failures should use generic tagged logging.
 - The OCR worker lifecycle guard should serialize native recognition and
   teardown and prevent results from reaching a destroyed activity.
+- Camera capture files must be deleted after cancellation, failed handoff, or
+  successful decode, and incomplete traineddata must never occupy the final
+  installed path.
+- Fresh share intents must retain only the read grant needed for the explicit
+  result activity and must remain idempotent across recreation.
 - The OCR result generation guard should reject stale image completions before
   result or progress UI mutation.
 - Nonblocking OCR teardown should preserve serialized native shutdown without

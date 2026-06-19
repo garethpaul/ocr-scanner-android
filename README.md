@@ -93,6 +93,12 @@ build an APK, start an emulator, or exercise OCR behavior.
   initialize an unused second Tesseract engine.
 - Launcher progress state is absent from `MainActivity`; active OCR progress
   display and teardown remain owned by `ResultActivity`.
+- Fresh `ACTION_SEND` deliveries received through `onNewIntent` are handled
+  once, and read grants are forwarded without logging private URI details.
+- Camera output files are deleted after consumption, cancellation, or failed
+  handoff; failed traineddata copies remain temporary and retryable.
+- OCR work and native cleanup share one ordered executor, and queued stale
+  generations are rejected before entering the native engine.
 
 ## Testing and Verification
 
@@ -104,11 +110,15 @@ build an APK, start an emulator, or exercise OCR behavior.
   checkout's Makefile by absolute path, such as
   `make -f /path/to/ocr-scanner-android/Makefile check`.
 - `python3 scripts/check-baseline.py`
+- `scripts/run-host-tests.sh`
+- `python3 scripts/test-baseline-mutations.py`
 - `./gradlew test` or Android Studio's test runner when the SDK is configured
 - Pinned hosted Linux validation uses a read-only, credential-free checkout and
   runs the SDK-free baseline on Python 3.12.
 - The baseline verifies the checked-in Gradle wrapper JAR against SHA-256
   `e2b82129ab64751fd40437007bd2f7f2afb3c6e41a9198e628650b22d5824a14`.
+- That JAR does not match Gradle's published 1.6 or 2.2.1 release wrapper
+  checksums, so it is not executed without additional provenance evidence.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
