@@ -106,9 +106,12 @@ build an APK, start an emulator, or exercise OCR behavior.
 - `make test`
 - `make build`
 - `make check`
-- The Make gates are location-independent. From another directory, pass the
-  checkout's Makefile by absolute path, such as
+- The Make gates are location-independent, including checkout paths containing
+  spaces or apostrophes. From another directory, pass the checkout's Makefile
+  by absolute path, such as
   `make -f /path/to/ocr-scanner-android/Makefile check`.
+- Command-line and environment `MAKEFILE_LIST` overrides fail before host or
+  mutation tests run, while caller-provided `ROOT` values are ignored.
 - `python3 scripts/check-baseline.py`
 - `scripts/run-host-tests.sh`
 - `python3 scripts/test-baseline-mutations.py`
