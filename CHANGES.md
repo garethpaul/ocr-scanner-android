@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-21
+
+- Made absolute Makefile verification safe for spaces and apostrophes and
+  rejected `MAKEFILE_LIST` injection before host or mutation tests run.
+- Added root-policy regressions to the full verification target.
+
 ## 2026-06-19
 
 - Cleaned canceled, failed, and consumed camera capture files instead of
