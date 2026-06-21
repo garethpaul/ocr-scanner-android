@@ -3,8 +3,10 @@
 ## 2026-06-21
 
 - Made absolute Makefile verification safe for spaces and apostrophes and
-  rejected `MAKEFILE_LIST` injection before host or mutation tests run.
-- Added root-policy regressions to the full verification target.
+  rejected command-line and environment `MAKEFILE_LIST` injection before host
+  or mutation tests run.
+- Added root-policy regressions for every public Make alias and caller-provided
+  command-line or environment `ROOT` values to the full verification target.
 
 ## 2026-06-19
 
