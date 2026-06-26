@@ -48,6 +48,9 @@ Helpful reports include:
   content is not routed into OCR image handling.
 - Shared image stream guards should stop OCR when an incoming image stream
   cannot be opened or decoded.
+- Bounded shared image decoding should inspect dimensions before allocation and
+  use the larger axis ratio so oversized content URIs cannot force a full-size
+  OCR bitmap.
 - The image open failure message should tell users when a shared image URI
   cannot be opened without exposing raw URI details.
 - Denied shared image access should fail closed with the same user-facing

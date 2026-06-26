@@ -36,6 +36,7 @@ Priority:
 - Keep shared image intents routed through explicit stream URI handling
 - Keep share intent filters image-only for OCR entry points
 - Keep shared image stream guards before OCR processing
+- Keep bounded shared image decoding on camera and content-URI paths before OCR
 - Keep the image open failure message visible for unreadable shared image URIs
 - Keep denied shared image access from crashing or leaking URI exception details
 - Keep OCR traineddata streams closed after asset-copy attempts

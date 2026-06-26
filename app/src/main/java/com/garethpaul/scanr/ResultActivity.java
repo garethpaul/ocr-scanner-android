@@ -29,6 +29,8 @@ public class ResultActivity extends Activity implements View.OnClickListener {
     private volatile int mOCRGeneration;
     private static final int REQUEST_TAKE_PHOTO = 1;
     private static final int REQUEST_PICK_PHOTO = 2;
+    private static final int TARGET_IMAGE_WIDTH = 500;
+    private static final int TARGET_IMAGE_HEIGHT = 500;
     private static final String TAG = "OCR";
     private String mCurrentPhotoPath;
 
@@ -63,14 +65,8 @@ public class ResultActivity extends Activity implements View.OnClickListener {
 
     private void uriOCR(Uri uri) {
         if (uri != null) {
-            InputStream is = null;
             try {
-                is = getContentResolver().openInputStream(uri);
-                if (is == null) {
-                    mResult.setText("Unable to open image.");
-                    return;
-                }
-                Bitmap bitmap = BitmapFactory.decodeStream(is);
+                Bitmap bitmap = decodeSharedBitmap(uri);
                 if (bitmap == null) {
                     mResult.setText("Unable to decode image.");
                     return;
@@ -83,15 +79,48 @@ public class ResultActivity extends Activity implements View.OnClickListener {
             } catch (SecurityException e) {
                 Log.e(TAG, "Image URI access denied");
                 mResult.setText("Unable to open image.");
-            } finally {
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException e) {
-                        Log.e(TAG, "Unable to close image URI stream");
-                    }
-                }
             }
+        }
+    }
+
+    private Bitmap decodeSharedBitmap(Uri uri) throws FileNotFoundException {
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        InputStream boundsStream = getContentResolver().openInputStream(uri);
+        if (boundsStream == null) {
+            throw new FileNotFoundException();
+        }
+        try {
+            BitmapFactory.decodeStream(boundsStream, null, bounds);
+        } finally {
+            closeImageStream(boundsStream);
+        }
+
+        int sampleSize = ImageSampleSize.forBounds(bounds.outWidth,
+                bounds.outHeight, TARGET_IMAGE_WIDTH, TARGET_IMAGE_HEIGHT);
+        if (sampleSize == 0) {
+            return null;
+        }
+
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = sampleSize;
+        options.inPurgeable = true;
+        InputStream imageStream = getContentResolver().openInputStream(uri);
+        if (imageStream == null) {
+            throw new FileNotFoundException();
+        }
+        try {
+            return BitmapFactory.decodeStream(imageStream, null, options);
+        } finally {
+            closeImageStream(imageStream);
+        }
+    }
+
+    private void closeImageStream(InputStream stream) {
+        try {
+            stream.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Unable to close image URI stream");
         }
     }
 
@@ -168,10 +197,6 @@ public class ResultActivity extends Activity implements View.OnClickListener {
         String photoPath = mCurrentPhotoPath;
         mCurrentPhotoPath = null;
         try {
-        // Get the dimensions of the View
-        int targetW = 500;
-        int targetH = 500;
-
         // Get the dimensions of the bitmap
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
@@ -179,11 +204,16 @@ public class ResultActivity extends Activity implements View.OnClickListener {
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
         // Determine how much to scale down the image
-        int scaleFactor = Math.max(1, Math.min(photoW / targetW, photoH / targetH));
+        int sampleSize = ImageSampleSize.forBounds(photoW, photoH,
+                TARGET_IMAGE_WIDTH, TARGET_IMAGE_HEIGHT);
+        if (sampleSize == 0) {
+            mResult.setText("Unable to decode image.");
+            return;
+        }
 
         // Decode the image file into a Bitmap sized to fill the View
         bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = Math.max(1, scaleFactor << 1);
+        bmOptions.inSampleSize = sampleSize;
         bmOptions.inPurgeable = true;
 
         Bitmap bitmap = BitmapFactory.decodeFile(photoPath, bmOptions);

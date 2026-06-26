@@ -46,6 +46,18 @@ MUTATIONS = [
         "if (mDestroyed)",
         "reject stale OCR generations",
     ),
+    (
+        "app/src/main/java/com/garethpaul/scanr/ResultActivity.java",
+        "Bitmap bitmap = decodeSharedBitmap(uri);",
+        "Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(uri));",
+        "ResultActivity bitmap decode must include Bitmap bitmap = decodeSharedBitmap(uri)",
+    ),
+    (
+        "app/src/main/java/com/garethpaul/scanr/ImageSampleSize.java",
+        "Math.max(widthRatio, heightRatio)",
+        "Math.min(widthRatio, heightRatio)",
+        "overflow-safe bounded image decodes",
+    ),
 ]
 
 
