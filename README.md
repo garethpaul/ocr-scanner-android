@@ -73,6 +73,9 @@ build an APK, start an emulator, or exercise OCR behavior.
   routed into an OCR-only flow.
 - Shared image stream guards stop OCR before processing when the incoming image
   stream cannot be opened or decoded.
+- Bounded shared image decoding reads dimensions first and applies an
+  overflow-safe power-of-two sample before allocating camera or content-URI
+  bitmaps for OCR.
 - The image open failure message keeps unreadable shared image URIs visible in
   the result screen without exposing raw URI details.
 - Denied shared image access is handled like a missing image instead of

@@ -55,6 +55,7 @@ OCR_RESULT_GENERATION_PLAN = "docs/plans/2026-06-15-ocr-result-generation-guard.
 NONBLOCKING_OCR_TEARDOWN_PLAN = "docs/plans/2026-06-15-nonblocking-ocr-teardown.md"
 SHARE_INTENT_RECREATION_PLAN = "docs/plans/2026-06-16-share-intent-recreation-guard.md"
 CAMERA_PATH_RECREATION_PLAN = "docs/plans/2026-06-17-camera-path-recreation-guard.md"
+BOUNDED_SHARED_IMAGE_PLAN = "docs/plans/2026-06-26-bounded-shared-image-decode.md"
 REQUIRED = [
     ".github/CODEOWNERS",
     ".github/workflows/check.yml",
@@ -68,6 +69,7 @@ REQUIRED = [
     "app/build.gradle",
     "app/src/main/AndroidManifest.xml",
     "app/src/main/java/com/garethpaul/scanr/CaptureFile.java",
+    "app/src/main/java/com/garethpaul/scanr/ImageSampleSize.java",
     "app/src/main/java/com/garethpaul/scanr/MainActivity.java",
     "app/src/main/java/com/garethpaul/scanr/OCRTaskRunner.java",
     "app/src/main/java/com/garethpaul/scanr/ResultActivity.java",
@@ -96,6 +98,7 @@ REQUIRED = [
     NONBLOCKING_OCR_TEARDOWN_PLAN,
     SHARE_INTENT_RECREATION_PLAN,
     CAMERA_PATH_RECREATION_PLAN,
+    BOUNDED_SHARED_IMAGE_PLAN,
     "docs/legacy-toolchain.md",
     "docs/readme-overview.svg",
     "gradle/wrapper/gradle-wrapper.jar",
@@ -103,6 +106,7 @@ REQUIRED = [
     "scripts/run-host-tests.sh",
     "scripts/test-baseline-mutations.py",
     "tests/com/garethpaul/scanr/CaptureFileTest.java",
+    "tests/com/garethpaul/scanr/ImageSampleSizeTest.java",
     "tests/com/garethpaul/scanr/OCRTaskRunnerTest.java",
 ]
 
@@ -336,8 +340,14 @@ def main():
         failures.append("ResultActivity must call super.onCreate before ActionBar access")
     for phrase in [
         "if (ab != null)",
-        "Math.max(1, Math.min",
-        "Math.max(1, scaleFactor << 1)",
+        "private static final int TARGET_IMAGE_WIDTH = 500",
+        "private static final int TARGET_IMAGE_HEIGHT = 500",
+        "Bitmap bitmap = decodeSharedBitmap(uri)",
+        "private Bitmap decodeSharedBitmap(Uri uri)",
+        "bounds.inJustDecodeBounds = true",
+        "ImageSampleSize.forBounds(bounds.outWidth",
+        "options.inSampleSize = sampleSize",
+        "private void closeImageStream(InputStream stream)",
         "if (bitmap == null)",
         "Unable to decode image.",
         "if (mProgressDialog != null)",
@@ -345,7 +355,6 @@ def main():
         'catch (SecurityException e)',
         'Log.e(TAG, "Image URI access denied")',
         'Log.e(TAG, "Unable to close image URI stream")',
-        "if (is == null)",
         'mResult.setText("Unable to open image.")',
         "extras.getParcelable(Intent.EXTRA_STREAM)",
         "uriOCR(imageUri)",
@@ -354,9 +363,39 @@ def main():
             failures.append(f"ResultActivity bitmap decode must include {phrase}")
     if (
         "catch (FileNotFoundException e)" not in result
-        or result.count('mResult.setText("Unable to open image.")') < 3
+        or result.count('mResult.setText("Unable to open image.")') < 2
     ):
         failures.append("ResultActivity must show a user-facing message when image URI opening fails")
+    shared_decode = result.split("private Bitmap decodeSharedBitmap", 1)[-1].split(
+        "private void closeImageStream", 1
+    )[0]
+    bounds_flag_index = shared_decode.find("bounds.inJustDecodeBounds = true")
+    first_open_index = shared_decode.find("getContentResolver().openInputStream(uri)")
+    bounds_decode_index = shared_decode.find("BitmapFactory.decodeStream(boundsStream, null, bounds)")
+    sample_index = shared_decode.find("ImageSampleSize.forBounds(bounds.outWidth")
+    option_index = shared_decode.find("options.inSampleSize = sampleSize")
+    second_open_index = shared_decode.find(
+        "getContentResolver().openInputStream(uri)", first_open_index + 1
+    )
+    sampled_decode_index = shared_decode.find(
+        "BitmapFactory.decodeStream(imageStream, null, options)"
+    )
+    if not (
+        shared_decode.count("getContentResolver().openInputStream(uri)") == 2
+        and 0 <= bounds_flag_index < first_open_index < bounds_decode_index
+        < sample_index < option_index < second_open_index < sampled_decode_index
+        and shared_decode.count("closeImageStream(") == 2
+    ):
+        failures.append("ResultActivity must bound shared image decodes before bitmap allocation")
+    camera_decode = result.split("private void setPic()", 1)[-1].split(
+        "protected void onActivityResult", 1
+    )[0]
+    if not (
+        "ImageSampleSize.forBounds(photoW, photoH" in camera_decode
+        and camera_decode.index("ImageSampleSize.forBounds(photoW, photoH")
+        < camera_decode.index("bmOptions.inSampleSize = sampleSize")
+    ):
+        failures.append("ResultActivity camera decode must use the bounded image sample helper")
     for unsafe_log in [
         'Log.e(TAG, "Unable to open image URI", e)',
         'Log.e(TAG, "Image URI access denied", e)',
@@ -450,6 +489,34 @@ def main():
         "catch (SecurityException error)",
     ]):
         failures.append("CaptureFile must fail closed while deleting only regular capture files")
+
+    image_sample_size = read("app/src/main/java/com/garethpaul/scanr/ImageSampleSize.java")
+    if not all(phrase in image_sample_size for phrase in [
+        "final class ImageSampleSize",
+        "static int forBounds(int width, int height, int targetWidth,",
+        "if (width <= 0 || height <= 0 || targetWidth <= 0 || targetHeight <= 0)",
+        "long widthRatio",
+        "long heightRatio",
+        "Math.max(widthRatio, heightRatio)",
+        "sampleSize <= Integer.MAX_VALUE / 2",
+    ]):
+        failures.append("ImageSampleSize must calculate overflow-safe bounded image decodes")
+
+    image_sample_tests = read("tests/com/garethpaul/scanr/ImageSampleSizeTest.java")
+    for phrase in [
+        "reject zero width",
+        "retain target-sized image",
+        "bound wide image",
+        "bound both dimensions with power-of-two sampling",
+        "avoid overflow for hostile dimensions",
+        "Integer.MAX_VALUE",
+    ]:
+        if phrase not in image_sample_tests:
+            failures.append(f"ImageSampleSize host tests must cover {phrase}")
+    host_runner = read("scripts/run-host-tests.sh")
+    for phrase in ["ImageSampleSize.java", "ImageSampleSizeTest.java", "ImageSampleSizeTest"]:
+        if phrase not in host_runner:
+            failures.append(f"host test runner must execute bounded image sampling: {phrase}")
 
     task_runner = read("app/src/main/java/com/garethpaul/scanr/OCRTaskRunner.java")
     if not all(phrase in task_runner for phrase in [
@@ -570,6 +637,23 @@ def main():
             failures.append(f"{path} must document the share intent recreation guard")
         if "camera path recreation guard" not in read(path).lower():
             failures.append(f"{path} must document the camera path recreation guard")
+    if not all(
+        "bounded shared image decoding" in document
+        for document in guidance_documents
+    ):
+        failures.append("all guidance must document bounded shared image decoding")
+    bounded_shared_image_plan = read(BOUNDED_SHARED_IMAGE_PLAN)
+    bounded_shared_image_verification = markdown_section(
+        bounded_shared_image_plan, "Verification Completed"
+    )
+    if not (
+        "status: completed" in bounded_shared_image_plan
+        and "All four Make gates passed" in bounded_shared_image_verification
+        and "Eight hostile baseline mutations were rejected"
+        in bounded_shared_image_verification
+        and "Android SDK" in bounded_shared_image_verification
+    ):
+        failures.append("bounded shared image decode plan must record completed verification")
 
     toolchain = " ".join(read("docs/legacy-toolchain.md").split())
     for phrase in [

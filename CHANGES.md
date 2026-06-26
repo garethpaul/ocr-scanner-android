@@ -1,5 +1,18 @@
 # Changes
 
+## 2026-06-26
+
+- **2026-06-26 10:46 PDT — Priority: correctness/privacy.** Replaced
+  full-resolution shared content-URI decoding with a two-pass bounds read and
+  overflow-safe power-of-two sample, and reused the same helper for camera
+  captures. Updated `ResultActivity.java`, a dependency-free helper and host
+  test, static/mutation gates, guidance, and the completed plan. All four Make
+  aliases, eight hostile mutations, and the external absolute-Makefile gate
+  pass; Android SDK, emulator, device camera, shared provider, and live OCR
+  remain unavailable. Finding: stream null/close guards did not bound bitmap
+  allocation. Blockers: none. Next action: publish the PR, verify hosted gates,
+  and merge only the green SHA.
+
 ## 2026-06-21
 
 - Made absolute Makefile verification safe for spaces and apostrophes and
