@@ -144,13 +144,80 @@ def main():
         for permission in ["android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_EXTERNAL_STORAGE"]:
             if permission not in permissions:
                 failures.append(f"manifest must explicitly document legacy {permission} usage")
-        manifest_text = read("app/src/main/AndroidManifest.xml")
-        if 'android:mimeType="text/plain"' in manifest_text:
-            failures.append("share intent filter must not advertise text/plain input")
-        if 'android:mimeType="image/*"' not in manifest_text:
-            failures.append("share intent filter must keep image/* input")
-        if 'android:launchMode="singleTop"' not in manifest_text:
+        # Assert against the parsed tree, not the raw text. Substring checks here
+        # were bypassable in ways that left the manifest genuinely broken while the
+        # gate passed: moving the image/* data node out of the SEND filter and into
+        # the MAIN/LAUNCHER filter left share-to-app with no mimeType at all, and
+        # moving launchMode="singleTop" from MainActivity to ResultActivity kept the
+        # substring present. `make check` never invokes Gradle for this project
+        # (docs/legacy-toolchain.md), so there is no aapt backstop -- this gate is
+        # the only line of defense and must therefore check structure.
+        activities = {
+            node.attrib.get(ANDROID_NS + "name"): node
+            for node in manifest.findall("application/activity")
+        }
+
+        main_activity = activities.get(".MainActivity")
+        if main_activity is None:
+            failures.append("manifest must declare .MainActivity")
+        elif main_activity.attrib.get(ANDROID_NS + "launchMode") != "singleTop":
             failures.append("MainActivity must use singleTop for reliable onNewIntent delivery")
+
+        def intent_filters_for(activity, action_name):
+            if activity is None:
+                return []
+            matching = []
+            for intent_filter in activity.findall("intent-filter"):
+                actions = {
+                    node.attrib.get(ANDROID_NS + "name")
+                    for node in intent_filter.findall("action")
+                }
+                if action_name in actions:
+                    matching.append(intent_filter)
+            return matching
+
+        send_filters = intent_filters_for(main_activity, "android.intent.action.SEND")
+        if not send_filters:
+            failures.append("MainActivity must declare an android.intent.action.SEND intent filter")
+        else:
+            send_mime_types = {
+                node.attrib.get(ANDROID_NS + "mimeType")
+                for send_filter in send_filters
+                for node in send_filter.findall("data")
+            }
+            if "image/*" not in send_mime_types:
+                failures.append("share intent filter must keep image/* input")
+            if "text/plain" in send_mime_types:
+                failures.append("share intent filter must not advertise text/plain input")
+
+        # The manifest's uses-sdk values are dead -- the Android Gradle plugin takes
+        # the build.gradle values -- so a drift between them is silently misleading.
+        uses_sdk = manifest.find("uses-sdk")
+        gradle_text = read("app/build.gradle")
+        for attribute, gradle_key in (("minSdkVersion", "minSdkVersion"), ("targetSdkVersion", "targetSdkVersion")):
+            declared = uses_sdk.attrib.get(ANDROID_NS + attribute) if uses_sdk is not None else None
+            if declared is None:
+                continue
+            match = re.search(r"\b%s\s+(\d+)" % gradle_key, gradle_text)
+            if match and match.group(1) != declared:
+                failures.append(
+                    "manifest %s=%s contradicts build.gradle %s %s; the Gradle value wins"
+                    % (attribute, declared, gradle_key, match.group(1))
+                )
+
+        # proguardFiles must name a file that exists, or minification silently
+        # depends on a missing ruleset the moment it is enabled. Only project-local
+        # entries are checked: getDefaultProguardFile() resolves against the Android
+        # SDK install, not this checkout.
+        for line in gradle_text.splitlines():
+            if "proguardFiles" not in line:
+                continue
+            local_entries = re.sub(r"getDefaultProguardFile\s*\([^)]*\)", "", line)
+            for referenced in re.findall(r"'([^']+)'", local_entries):
+                if not (ROOT / "app" / referenced).exists():
+                    failures.append(
+                        "app/build.gradle proguardFiles references missing %s" % referenced
+                    )
     except ET.ParseError as error:
         failures.append(f"AndroidManifest.xml must parse as XML: {error}")
 
