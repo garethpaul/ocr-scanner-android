@@ -15,6 +15,21 @@ public final class CaptureFileTest {
         assertTrue(!capture.exists(), "deleted capture must not remain on disk");
         assertTrue(!CaptureFile.delete(null), "null capture path must be rejected");
         assertTrue(!CaptureFile.delete(""), "empty capture path must be rejected");
+        assertTrue(!CaptureFile.delete(capture.getAbsolutePath()),
+                "missing capture path must be rejected");
+
+        File directory = File.createTempFile("ocr-capture-dir-", "");
+        assertTrue(directory.delete(), "directory probe setup must clear the temp file");
+        assertTrue(directory.mkdir(), "directory probe setup must create a directory");
+        try {
+            assertTrue(!CaptureFile.delete(directory.getAbsolutePath()),
+                    "directory must not be reported as a deleted capture");
+            assertTrue(directory.isDirectory(),
+                    "directory must survive a capture delete attempt");
+        } finally {
+            directory.delete();
+        }
+        System.out.println("CaptureFile tests passed.");
     }
 
     private static void assertTrue(boolean condition, String message) {

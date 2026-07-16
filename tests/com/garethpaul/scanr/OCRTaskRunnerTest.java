@@ -40,6 +40,7 @@ public final class OCRTaskRunnerTest {
         assertTrue(cleanupFinished.await(5, TimeUnit.SECONDS), "cleanup did not finish");
         assertTrue("work-cleanup".equals(order.toString()),
                 "native cleanup must run after accepted OCR work");
+        System.out.println("OCRTaskRunner tests passed.");
     }
 
     private static void await(CountDownLatch latch) {
