@@ -509,14 +509,38 @@ def main():
         "bound wide image",
         "bound both dimensions with power-of-two sampling",
         "avoid overflow for hostile dimensions",
+        "terminate for extreme target ratios",
         "Integer.MAX_VALUE",
     ]:
         if phrase not in image_sample_tests:
             failures.append(f"ImageSampleSize host tests must cover {phrase}")
+    capture_file_tests = read("tests/com/garethpaul/scanr/CaptureFileTest.java")
+    for phrase in [
+        "owned capture should be deleted",
+        "null capture path must be rejected",
+        "empty capture path must be rejected",
+        "missing capture path must be rejected",
+        "directory must not be reported as a deleted capture",
+        "directory must survive a capture delete attempt",
+    ]:
+        if phrase not in capture_file_tests:
+            failures.append(f"CaptureFile host tests must cover {phrase}")
     host_runner = read("scripts/run-host-tests.sh")
-    for phrase in ["ImageSampleSize.java", "ImageSampleSizeTest.java", "ImageSampleSizeTest"]:
-        if phrase not in host_runner:
-            failures.append(f"host test runner must execute bounded image sampling: {phrase}")
+    # Pin the whole invocation, not the bare class name: "ImageSampleSizeTest" is a
+    # substring of the javac argument, so a bare-name check stays satisfied when only
+    # the `java` line is deleted and the suite silently stops running.
+    for label, source, test in [
+        ("bounded image sampling", "ImageSampleSize.java", "ImageSampleSizeTest"),
+        ("capture ownership", "CaptureFile.java", "CaptureFileTest"),
+        ("OCR task ordering", "OCRTaskRunner.java", "OCRTaskRunnerTest"),
+    ]:
+        for phrase in [
+            f'"$ROOT/app/src/main/java/com/garethpaul/scanr/{source}"',
+            f'"$ROOT/tests/com/garethpaul/scanr/{test}.java"',
+            f'java -cp "$BUILD_DIR" com.garethpaul.scanr.{test}',
+        ]:
+            if phrase not in host_runner:
+                failures.append(f"host test runner must execute {label}: {phrase}")
 
     task_runner = read("app/src/main/java/com/garethpaul/scanr/OCRTaskRunner.java")
     if not all(phrase in task_runner for phrase in [
